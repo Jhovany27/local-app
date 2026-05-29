@@ -1,11 +1,115 @@
-@import 'tailwindcss';
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+@source '...';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+@import "./components/pendiente.css";
+@import "./components/seleccionar-tienda.css";
+@import "./components/ventas.css";
+@import "./components/nueva-venta.css";
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+@layer components {
+    .store-selector-wrapper {
+        @apply mx-auto w-full max-w-7xl;
+    }
+
+    .store-selector-hero {
+        @apply mb-8 rounded-3xl bg-gradient-to-r from-lime-500 to-emerald-600 p-8 text-white shadow-xl;
+    }
+
+    .store-selector-kicker {
+        @apply text-xs font-bold uppercase tracking-[0.18em] text-white/80;
+    }
+
+    .store-selector-title {
+        @apply mt-2 text-3xl font-extrabold tracking-tight md:text-4xl;
+    }
+
+    .store-selector-description {
+        @apply mt-3 max-w-3xl text-sm leading-6 text-white/90 md:text-base;
+    }
+
+    .store-selector-grid {
+        @apply grid gap-6 md:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .store-selector-card {
+        @apply overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-2xl;
+    }
+
+    .store-selector-card-bar {
+        @apply h-1.5 bg-gradient-to-r from-lime-500 to-emerald-500;
+    }
+
+    .store-selector-card-body {
+        @apply p-6;
+    }
+
+    .store-selector-card-header {
+        @apply flex items-start justify-between gap-4;
+    }
+
+    .store-selector-id {
+        @apply text-xs font-extrabold uppercase tracking-[0.18em] text-lime-700;
+    }
+
+    .store-selector-name {
+        @apply mt-2 text-2xl font-extrabold text-black;
+    }
+
+    .store-selector-badge {
+        @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
+    }
+
+    .store-selector-badge-active {
+        @apply bg-emerald-100 text-emerald-800;
+    }
+
+    .store-selector-badge-inactive {
+        @apply bg-rose-100 text-rose-800;
+    }
+
+    .store-selector-section {
+        @apply mt-5 space-y-4;
+    }
+
+    .store-selector-label {
+        @apply text-xs font-extrabold uppercase tracking-wide text-gray-600;
+    }
+
+    .store-selector-text {
+        @apply mt-1 text-sm font-medium leading-6 text-black;
+    }
+
+    .store-selector-info-grid {
+        @apply grid gap-4 sm:grid-cols-2;
+    }
+
+    .store-selector-info-box {
+        @apply rounded-2xl border border-gray-200 bg-gray-50 p-4;
+    }
+
+    .store-selector-info-value {
+        @apply mt-1 text-sm font-bold text-black;
+    }
+
+    .store-selector-action {
+        @apply mt-6;
+    }
+
+    .store-selector-button {
+        @apply inline-flex w-full items-center justify-center rounded-2xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition duration-300 hover:bg-lime-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70;
+    }
 }

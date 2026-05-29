@@ -1,0 +1,212 @@
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
+
+/* Fondo general */
+.fi-simple-layout {
+    min-height: 100vh;
+    background: #edf3e3 !important;
+    padding: 40px 20px !important;
+}
+
+/* Centrado */
+.fi-simple-main-ctn {
+    max-width: 980px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    position: relative;
+}
+
+/* Card principal */
+.fi-simple-main {
+    width: 100% !important;
+    max-width: 980px !important;
+    min-height: 540px !important;
+    margin: 0 auto !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+    background: linear-gradient(
+        to right,
+        #ececec 0%,
+        #ececec 50%,
+        #a8df11 50%,
+        #a8df11 100%
+    ) !important;
+    position: relative !important;
+    padding: 0 !important;
+}
+
+
+/* Ocultar logo/branding original */
+.fi-logo,
+.fi-simple-header .fi-logo,
+.fi-simple-header [src],
+.fi-simple-header svg {
+    display: none !important;
+}
+
+/* Header del login */
+.fi-simple-header {
+    width: 50% !important;
+    max-width: 50% !important;
+    padding: 90px 60px 0 60px !important;
+    margin: 0 !important;
+    position: relative;
+    z-index: 3;
+}
+
+/* Título */
+.fi-simple-header-heading {
+    text-align: center !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+    line-height: 1.2 !important;
+}
+
+/* Ocultar subtítulo */
+.fi-simple-header-subheading {
+    display: none !important;
+}
+
+/* Formulario completo */
+.fi-simple-main form {
+    width: 50% !important;
+    max-width: 50% !important;
+    padding: 24px 60px 70px 60px !important;
+    position: relative;
+    z-index: 3;
+}
+
+/* Cada campo */
+.fi-fo-component-ctn {
+    margin-bottom: 20px !important;
+}
+
+/* Labels */
+.fi-fo-field-wrp-label {
+    margin-bottom: 8px !important;
+}
+
+.fi-fo-field-wrp-label label,
+.fi-fo-field-wrp-label span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #222 !important;
+}
+
+/* Inputs wrapper */
+.fi-input-wrp {
+    min-height: 48px !important;
+    border: 2px solid #333 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Input interno */
+.fi-input {
+    min-height: 44px !important;
+    font-size: 15px !important;
+    color: #111 !important;
+}
+
+/* Focus */
+.fi-input-wrp:focus-within {
+    border-color: #111 !important;
+    box-shadow: none !important;
+}
+
+/* Password suffix / icon */
+.fi-input-wrp-suffix {
+    color: #444 !important;
+}
+
+/* Checkbox remember */
+.fi-checkbox,
+.fi-checkbox-input,
+.fi-checkbox-input:checked,
+.fi-fo-checkbox {
+    border-radius: 6px !important;
+}
+
+.fi-fo-field-wrp:has(input[type="checkbox"]) label,
+.fi-fo-field-wrp:has(input[type="checkbox"]) span {
+    text-align: left !important;
+    font-size: 14px !important;
+    color: #555 !important;
+}
+
+/* Forgot password link */
+a[href*="password"],
+a[href*="reset"] {
+    display: inline-block !important;
+    margin-top: -4px !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    text-decoration: underline !important;
+}
+
+/* Área de acciones */
+.fi-ac {
+    margin-top: 18px !important;
+}
+
+/* Botón submit */
+.fi-btn[type="submit"] {
+    width: 100% !important;
+    max-width: 240px !important;
+    margin: 0 auto !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    background: #a8df11 !important;
+    color: #fff !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.fi-btn[type="submit"]:hover {
+    background: #95c510 !important;
+}
+
+/* Errores */
+.fi-fo-field-wrp-error-message {
+    font-size: 12px !important;
+    color: #d11a2a !important;
+    margin-top: 6px !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .fi-simple-main {
+        background: #ececec !important;
+        min-height: auto !important;
+    }
+
+    .fi-simple-main::after {
+        display: none !important;
+    }
+
+    .fi-simple-header,
+    .fi-simple-main form {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .fi-simple-header {
+        padding: 48px 24px 0 24px !important;
+    }
+
+    .fi-simple-main form {
+        padding: 20px 24px 40px 24px !important;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 24px !important;
+    }
+}

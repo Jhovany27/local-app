@@ -51,4 +51,9 @@ class DocumentoTienda extends Model
 	{
 		return $this->belongsTo(TipoDocumentoTienda::class, 'dot_fk_tipo_documento');
 	}
+
+	public function tipo_documento()
+	{
+		return $this->belongsTo(\App\Models\TipoDocumentoTienda::class, 'dot_fk_tipo_documento', 'tdt_id');
+	}
 }

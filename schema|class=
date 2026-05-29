@@ -1,0 +1,128 @@
+44: * @property-read Action $registerAction
+45: * @property-read Schema $form
+46: * @property-read Schema $multiFactorChallengeForm
+62:        if (Filament::auth()->check()) {
+63:            redirect()->intended(Filament::getUrl());
+66:        $this->form->fill();
+72:            $this->rateLimit(5);
+74:            $this->getRateLimitedNotification($exception)?->send();
+79:        $data = $this->form->getState();
+84:        $authProvider = $authGuard->getProvider(); /** @phpstan-ignore-line */
+85:        $credentials = $this->getCredentialsFromFormData($data);
+87:        $user = $authProvider->retrieveByCredentials($credentials);
+89:        if ((! $user) || (! $authProvider->validateCredentials($user, $credentials))) {
+90:            $this->userUndertakingMultiFactorAuthentication = null;
+92:            $this->fireFailedEvent($authGuard, $user, $credentials);
+93:            $this->throwFailureValidationException();
+97:            filled($this->userUndertakingMultiFactorAuthentication) &&
+98:            (decrypt($this->userUndertakingMultiFactorAuthentication) === $user->getAuthIdentifier())
+100:            if ($this->isMultiFactorChallengeRateLimited($user)) {
+104:            $this->multiFactorChallengeForm->validate();
+107:                if (! $multiFactorAuthenticationProvider->isEnabled($user)) {
+111:                $this->userUndertakingMultiFactorAuthentication = encrypt($user->getAuthIdentifier());
+114:                    $multiFactorAuthenticationProvider->beforeChallenge($user);
+120:            if (filled($this->userUndertakingMultiFactorAuthentication)) {
+121:                $this->multiFactorChallengeForm->fill();
+127:        if (! $authGuard->attemptWhen($credentials, function (Authenticatable $user): bool {
+132:            return $user->canAccessPanel(Filament::getCurrentOrDefaultPanel());
+134:            $this->fireFailedEvent($authGuard, $user, $credentials);
+135:            $this->throwFailureValidationException();
+138:        session()->regenerate();
+145:        $rateLimitingKey = "filament-multi-factor-challenge:{$user->getAuthIdentifier()}";
+148:            $this->getRateLimitedNotification(new TooManyRequestsException(
+151:                request()->ip(),
+153:            ))?->send();
+166:            ->title(__('filament-panels::auth/pages/login.notifications.throttled.title', [
+167:                'seconds' => $exception->secondsUntilAvailable,
+168:                'minutes' => $exception->minutesUntilAvailable,
+170:            ->body(array_key_exists('body', __('filament-panels::auth/pages/login.notifications.throttled') ?: []) ? __('filament-panels::auth/pages/login.notifications.throttled.body', [
+171:                'seconds' => $exception->secondsUntilAvailable,
+172:                'minutes' => $exception->minutesUntilAvailable,
+174:            ->danger();
+182:        event(app(Failed::class, ['guard' => property_exists($guard, 'name') ? $guard->name : '', 'user' => $user, 'credentials' => $credentials]));
+188:            'data.email' => __('filament-panels::auth/pages/login.messages.failed'),
+195:            ->statePath('data');
+201:            ->components([
+202:                $this->getEmailFormComponent(),
+203:                $this->getPasswordFormComponent(),
+204:                $this->getRememberFormComponent(),
+211:            ->components(function (): array {
+212:                if (blank($this->userUndertakingMultiFactorAuthentication)) {
+216:                $authProvider = Filament::auth()->getProvider(); /** @phpstan-ignore-line */
+217:                $user = $authProvider->retrieveById(decrypt($this->userUndertakingMultiFactorAuthentication));
+221:                    fn (MultiFactorAuthenticationProvider $multiFactorAuthenticationProvider): bool => $multiFactorAuthenticationProvider->isEnabled($user)
+225:                    ...Arr::wrap($this->getMultiFactorProviderFormComponent()),
+227:                        ->map(fn (MultiFactorAuthenticationProvider $multiFactorAuthenticationProvider): Component => Group::make($multiFactorAuthenticationProvider->getChallengeFormComponents($user))
+228:                            ->statePath($multiFactorAuthenticationProvider->getId())
+229:                            ->when(
+231:                                fn (Group $group) => $group->visible(fn (Get $get): bool => $get('provider') === $multiFactorAuthenticationProvider->getId())
+233:                        ->all(),
+236:            ->statePath('data.multiFactor');
+247:            ->label(__('filament-panels::auth/pages/login.form.email.label'))
+248:            ->email()
+249:            ->required()
+250:            ->autocomplete()
+251:            ->autofocus();
+257:            ->label(__('filament-panels::auth/pages/login.form.password.label'))
+258:            ->hint(filament()->hasPasswordReset() ? new HtmlString(Blade::render('<x-filament::link :href="filament()->getRequestPasswordResetUrl()"> {{ __(\'filament-panels::auth/pages/login.actions.request_password_reset.label\') }}</x-filament::link>')) : null)
+259:            ->password()
+260:            ->revealable(filament()->arePasswordsRevealable())
+261:            ->autocomplete('current-password')
+262:            ->required();
+268:            ->label(__('filament-panels::auth/pages/login.form.remember.label'));
+273:        $authProvider = Filament::auth()->getProvider(); /** @phpstan-ignore-line */
+274:        $user = $authProvider->retrieveById(decrypt($this->userUndertakingMultiFactorAuthentication));
+278:            fn (MultiFactorAuthenticationProvider $multiFactorAuthenticationProvider): bool => $multiFactorAuthenticationProvider->isEnabled($user)
+286:            ->compact()
+287:            ->secondary()
+288:            ->schema(fn (Section $section): array => [
+290:                    ->label(__('filament-panels::auth/pages/login.multi_factor.form.provider.label'))
+291:                    ->options(array_map(
+292:                        fn (MultiFactorAuthenticationProvider $multiFactorAuthenticationProvider): string => $multiFactorAuthenticationProvider->getLoginFormLabel(),
+295:                    ->live()
+296:                    ->afterStateUpdated(function (?string $state) use ($enabledMultiFactorAuthenticationProviders, $section, $user): void {
+304:                            ->getContainer()
+305:                            ->getComponent($provider->getId())
+306:                            ->getChildSchema()
+307:                            ->fill();
+313:                        $provider->beforeChallenge($user);
+315:                    ->default(array_key_first($enabledMultiFactorAuthenticationProviders))
+316:                    ->required()
+317:                    ->markAsRequired(false),
+324:            ->link()
+325:            ->label(__('filament-panels::auth/pages/login.actions.register.label'))
+326:            ->url(filament()->getRegistrationUrl());
+331:        return __('filament-panels::auth/pages/login.title');
+336:        if (filled($this->userUndertakingMultiFactorAuthentication)) {
+337:            return __('filament-panels::auth/pages/login.multi_factor.heading');
+340:        return __('filament-panels::auth/pages/login.heading');
+349:            $this->getAuthenticateFormAction(),
+356:            ->label(__('filament-panels::auth/pages/login.form.actions.authenticate.label'))
+357:            ->submit('authenticate');
+366:            $this->getMultiFactorAuthenticateFormAction(),
+373:            ->label(__('filament-panels::auth/pages/login.multi_factor.form.actions.authenticate.label'))
+374:            ->submit('authenticate');
+384:        return $this->hasFullWidthFormActions();
+401:        if (filled($this->userUndertakingMultiFactorAuthentication)) {
+402:            return __('filament-panels::auth/pages/login.multi_factor.subheading');
+405:        if (! filament()->hasRegistration()) {
+409:        return new HtmlString(__('filament-panels::auth/pages/login.actions.register.before') . ' ' . $this->registerAction->toHtml());
+415:            ->components([
+417:                $this->getFormContentComponent(),
+418:                $this->getMultiFactorChallengeFormContentComponent(),
+426:            ->id('form')
+427:            ->livewireSubmitHandler('authenticate')
+428:            ->footer([
+429:                Actions::make($this->getFormActions())
+430:                    ->alignment($this->getFormActionsAlignment())
+431:                    ->fullWidth($this->hasFullWidthFormActions())
+432:                    ->key('form-actions'),
+434:            ->visible(fn (): bool => blank($this->userUndertakingMultiFactorAuthentication));
+440:            ->id('multiFactorChallengeForm')
+441:            ->livewireSubmitHandler('authenticate')
+442:            ->footer([
+443:                Actions::make($this->getMultiFactorChallengeFormActions())
+444:                    ->alignment($this->getMultiFactorChallengeFormActionsAlignment())
+445:                    ->fullWidth($this->hasFullWidthMultiFactorChallengeFormActions()),
+447:            ->visible(fn (): bool => filled($this->userUndertakingMultiFactorAuthentication));
+452:        return $this->getFormActionsAlignment();

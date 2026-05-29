@@ -2,12 +2,6 @@
 
 namespace App\Filament\Resources\Tiendas;
 
-use App\Filament\Resources\Tiendas\Pages\CreateTienda;
-use App\Filament\Resources\Tiendas\Pages\EditTienda;
-use App\Filament\Resources\Tiendas\Pages\ListTiendas;
-use App\Filament\Resources\Tiendas\Pages\ViewTienda;
-use App\Filament\Resources\Tiendas\Schemas\TiendaForm;
-use App\Filament\Resources\Tiendas\Schemas\TiendaInfolist;
 use App\Filament\Resources\Tiendas\Tables\TiendasTable;
 use App\Models\Tienda;
 use BackedEnum;
@@ -20,16 +14,17 @@ class TiendaResource extends Resource
 {
     protected static ?string $model = Tienda::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
+
+    protected static ?string $navigationLabel = 'Tiendas';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
-        return TiendaForm::configure($schema);
-    }
-
-    public static function infolist(Schema $schema): Schema
-    {
-        return TiendaInfolist::configure($schema);
+        return $schema->components([]);
     }
 
     public static function table(Table $table): Table
@@ -37,20 +32,20 @@ class TiendaResource extends Resource
         return TiendasTable::configure($table);
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->with(['user.persona', 'fachada']);
+    }
+
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListTiendas::route('/'),
-            'create' => CreateTienda::route('/create'),
-            'view' => ViewTienda::route('/{record}'),
-            'edit' => EditTienda::route('/{record}/edit'),
+            'index' => Pages\ListTiendas::route('/'),
         ];
     }
 }

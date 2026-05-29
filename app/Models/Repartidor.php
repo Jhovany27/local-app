@@ -41,4 +41,8 @@ class Repartidor extends Model
 	{
 		return $this->belongsTo(User::class);
 	}
+	public function documentos()
+	{
+		return $this->hasMany(\App\Models\DocumentoRepartidor::class, 'dor_fk_repartidor', 'rep_id');
+	}
 }

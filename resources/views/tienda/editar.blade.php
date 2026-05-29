@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Editar tienda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @vite('resources/css/filament/store/theme.css')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #edf3e3;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem 1rem 3rem;
+            font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem 2rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #111;
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        /* ── PROGRESO ── */
+        .progress {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 2rem;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            flex: 1;
+            position: relative;
+        }
+
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #e8f5d0;
+            z-index: 0;
+            transition: background 0.3s;
+        }
+
+        .step-item.done::after {
+            background: #a8df11;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+            transition: all 0.25s;
+        }
+
+        .step-circle.inactive {
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            color: #aaa;
+        }
+
+        .step-circle.active {
+            background: #a8df11;
+            border: 2px solid #a8df11;
+            color: white;
+            box-shadow: 0 4px 12px rgba(168, 223, 17, 0.4);
+        }
+
+        .step-circle.done {
+            background: #a8df11;
+            border: 2px solid #a8df11;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: color 0.25s;
+        }
+
+        .step-label.inactive {
+            color: #ccc;
+        }
+
+        .step-label.active,
+        .step-label.done {
+            color: #4a8a06;
+        }
+
+        /* ── CAMPOS ── */
+        .field {
+            margin-bottom: 1rem;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.4rem;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.85rem;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: #111;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            resize: none;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: #a8df11;
+            box-shadow: 0 0 0 4px rgba(168, 223, 17, 0.1);
+        }
+
+        .field textarea {
+            height: 80px;
+        }
+
+        /* ── MAPA ── */
+        .mapa-wrap {
+            position: relative;
+            margin-bottom: 0.75rem;
+        }
+
+        #mapa {
+            width: 100%;
+            height: 220px;
+            border-radius: 0.85rem;
+            border: 2px solid #e5e7eb;
+            z-index: 1;
+        }
+
+        .mapa-pin {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 999;
+            pointer-events: none;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .mapa-pin svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .mapa-buscador {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            right: 0.5rem;
+            z-index: 999;
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .mapa-buscador input {
+            flex: 1;
+            background: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            font-family: inherit;
+        }
+
+        .mapa-buscador button {
+            width: 32px;
+            height: 32px;
+            background: #a8df11;
+            border: none;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .mapa-gps {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            z-index: 999;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .dir-detectada {
+            font-size: 0.72rem;
+            color: #888;
+            text-align: center;
+            margin-bottom: 0.65rem;
+        }
+
+        /* ── FACHADA PREVIEW ── */
+        .preview-fachada {
+            width: 100%;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            margin-bottom: 0.65rem;
+        }
+
+        /* ── UPLOAD ── */
+        .upload-zone {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            border: 2px dashed #d4f0a0;
+            background: #f8fdf0;
+            border-radius: 0.85rem;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .upload-zone:hover {
+            border-color: #a8df11;
+            background: #f0fde0;
+        }
+
+        .upload-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 0.6rem;
+            background: white;
+            border: 1px solid #d4f0a0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .upload-icon svg {
+            width: 16px;
+            height: 16px;
+            color: #a8df11;
+        }
+
+        .upload-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #4a8a06;
+        }
+
+        .upload-hint {
+            font-size: 0.68rem;
+            color: #aaa;
+            margin-top: 0.1rem;
+        }
+
+        .upload-name {
+            font-size: 0.72rem;
+            color: #555;
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+
+        /* ── DOC LINK ── */
+        .doc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #4a8a06;
+            background: #f0fde0;
+            border: 1px solid #c6f135;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.65rem;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            transition: background 0.15s;
+        }
+
+        .doc-link:hover {
+            background: #e0f8c0;
+        }
+
+        .doc-link svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ── SUCCESS ── */
+        .success-msg {
+            background: #f0fde0;
+            border: 1px solid #c6f135;
+            color: #4a8a06;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-msg svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ── BOTONES NAV ── */
+        .nav-btns {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-prev {
+            flex: 1;
+            background: #f0f0f0;
+            color: #555;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.85rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-prev:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-next,
+        .btn-submit {
+            flex: 2;
+            background: linear-gradient(135deg, #a8df11, #7cc10a);
+            color: #1a1a1a;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 800;
+            padding: 0.85rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(168, 223, 17, 0.35);
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-next:hover,
+        .btn-submit:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+
+    {{-- BOTÓN VOLVER --}}
+    <a href="{{ \App\Filament\Store\Pages\MiTienda::getUrl(panel: 'store') }}"
+        class="fixed top-5 left-5 inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm
+          text-gray-600 text-sm font-semibold px-4 py-2 rounded-full shadow-sm
+          border border-gray-200 hover:bg-white hover:text-gray-900 transition-all z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Mi tienda
+    </a>
+
+    <div class="card">
+
+        <h1 class="page-title">Editar tienda</h1>
+
+        @if (session('success'))
+            <div class="success-msg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                {{ session('success') }}
+            </div>
+        @endif
+
+        {{-- PROGRESO --}}
+        <div class="progress">
+            <div class="step-item" id="si1">
+                <div class="step-circle active" id="sc1">1</div>
+                <span class="step-label active" id="sl1">Datos</span>
+            </div>
+            <div class="step-item" id="si2">
+                <div class="step-circle inactive" id="sc2">2</div>
+                <span class="step-label inactive" id="sl2">Ubicación</span>
+            </div>
+            <div class="step-item" id="si3">
+                <div class="step-circle inactive" id="sc3">3</div>
+                <span class="step-label inactive" id="sl3">Archivos</span>
+            </div>
+        </div>
+
+        <form action="{{ route('store.editar-tienda') }}" method="POST" enctype="multipart/form-data" id="form-editar">
+            @csrf
+
+            {{-- ══ PASO 1: DATOS ══ --}}
+            <div id="step1">
+                <div class="field">
+                    <label>Nombre de la tienda</label>
+                    <input type="text" name="tie_nombre" value="{{ $tienda->tie_nombre }}" required>
+                </div>
+                <div class="field">
+                    <label>Descripción</label>
+                    <textarea name="tie_descripcion">{{ $tienda->tie_descripcion }}</textarea>
+                </div>
+                <div class="field">
+                    <label>Teléfono</label>
+                    <input type="text" name="tie_telefono" value="{{ $tienda->tie_telefono }}">
+                </div>
+                <div class="nav-btns">
+                    <button type="button" class="btn-next" onclick="goTo(2)">Siguiente →</button>
+                </div>
+            </div>
+
+            {{-- ══ PASO 2: UBICACIÓN ══ --}}
+            <div id="step2" style="display:none">
+                <div class="mapa-wrap">
+                    <div class="mapa-buscador">
+                        <input type="text" id="buscar-dir" placeholder="Buscar dirección...">
+                        <button type="button" onclick="buscarDir()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2.5" stroke="white" style="width:14px;height:14px">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="mapa"></div>
+                    <div class="mapa-pin">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                fill="#a8df11" stroke="white" stroke-width="1.5" />
+                            <circle cx="12" cy="9" r="2.5" fill="white" />
+                        </svg>
+                    </div>
+                    <button type="button" class="mapa-gps" onclick="irAMiUbicacion()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="#4a8a06" style="width:16px;height:16px">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <p id="texto-dir" class="dir-detectada">Cargando ubicación guardada...</p>
+
+                <div class="field">
+                    <label>Dirección completa</label>
+                    <input type="text" name="tie_direccion" id="input-direccion"
+                        value="{{ $tienda->tie_direccion }}" required>
+                </div>
+
+                <input type="hidden" name="tie_latitud" id="input-lat" value="{{ $tienda->tie_latitud }}">
+                <input type="hidden" name="tie_longitud" id="input-lng" value="{{ $tienda->tie_longitud }}">
+
+                <div class="nav-btns">
+                    <button type="button" class="btn-prev" onclick="goTo(1)">← Volver</button>
+                    <button type="button" class="btn-next" onclick="goTo(3)">Siguiente →</button>
+                </div>
+            </div>
+
+            {{-- ══ PASO 3: ARCHIVOS ══ --}}
+            <div id="step3" style="display:none">
+
+                @php
+                    $ine = $tienda->documentos->firstWhere('dot_fk_tipo_documento', 1);
+                    $comp = $tienda->documentos->firstWhere('dot_fk_tipo_documento', 2);
+                @endphp
+
+                {{-- FACHADA --}}
+                <div class="field">
+                    <label>Foto de la fachada</label>
+                    @if ($tienda->fachada)
+                        <img id="preview-fachada" src="{{ asset('storage/' . $tienda->fachada->fac_ruta) }}"
+                            class="preview-fachada">
+                    @else
+                        <img id="preview-fachada" class="preview-fachada" style="display:none">
+                    @endif
+                    <label for="input-fachada" class="upload-zone">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="upload-label">{{ $tienda->fachada ? 'Cambiar imagen' : 'Subir fachada' }}</p>
+                            <p class="upload-hint">JPG, PNG, WEBP — máx 2MB</p>
+                            <p class="upload-name" id="fachada-name"></p>
+                        </div>
+                    </label>
+                    <input type="file" id="input-fachada" name="fachada" accept="image/*" style="display:none"
+                        onchange="previewFachada(event)">
+                </div>
+
+                {{-- INE --}}
+                <div class="field">
+                    <label>Identificación Oficial (INE)</label>
+                    @if ($ine)
+                        <a href="{{ asset('storage/' . $ine->dot_ruta) }}" target="_blank" class="doc-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            Ver INE actual
+                        </a>
+                    @endif
+                    <label for="input-ine" class="upload-zone">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="upload-label">{{ $ine ? 'Reemplazar INE' : 'Subir INE' }}</p>
+                            <p class="upload-hint">Solo PDF — máx 4MB</p>
+                            <p class="upload-name" id="ine-name"></p>
+                        </div>
+                    </label>
+                    <input type="file" id="input-ine" name="ine" accept="application/pdf"
+                        style="display:none" onchange="showName(event,'ine-name')">
+                </div>
+
+                {{-- COMPROBANTE --}}
+                <div class="field">
+                    <label>Comprobante de domicilio</label>
+                    @if ($comp)
+                        <a href="{{ asset('storage/' . $comp->dot_ruta) }}" target="_blank" class="doc-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            Ver comprobante actual
+                        </a>
+                    @endif
+                    <label for="input-comp" class="upload-zone">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="upload-label">{{ $comp ? 'Reemplazar comprobante' : 'Subir comprobante' }}</p>
+                            <p class="upload-hint">Solo PDF — máx 4MB</p>
+                            <p class="upload-name" id="comp-name"></p>
+                        </div>
+                    </label>
+                    <input type="file" id="input-comp" name="comprobante" accept="application/pdf"
+                        style="display:none" onchange="showName(event,'comp-name')">
+                </div>
+
+                <div class="nav-btns">
+                    <button type="button" class="btn-prev" onclick="goTo(2)">← Volver</button>
+                    <button type="submit" class="btn-submit">Guardar cambios</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ── NAVEGACIÓN ─────────────────────────────────────
+        let mapaListo = false;
+
+        function goTo(step) {
+            [1, 2, 3].forEach(i => {
+                document.getElementById('step' + i).style.display = 'none';
+                const sc = document.getElementById('sc' + i);
+                const sl = document.getElementById('sl' + i);
+                const si = document.getElementById('si' + i);
+                if (i < step) {
+                    sc.className = 'step-circle done';
+                    sl.className = 'step-label done';
+                    si.classList.add('done');
+                } else if (i === step) {
+                    sc.className = 'step-circle active';
+                    sl.className = 'step-label active';
+                    si.classList.remove('done');
+                } else {
+                    sc.className = 'step-circle inactive';
+                    sl.className = 'step-label inactive';
+                    si.classList.remove('done');
+                }
+            });
+            document.getElementById('step' + step).style.display = 'block';
+
+            if (step === 2 && !mapaListo) {
+                initMapa();
+                mapaListo = true;
+            }
+        }
+
+        // ── MAPA ───────────────────────────────────────────
+        let mapa, gpsListo = false;
+        const initLat = {{ floatval($tienda->tie_latitud) ?: 17.9869 }};
+        const initLng = {{ floatval($tienda->tie_longitud) ?: -92.9303 }};
+
+        function initMapa() {
+            mapa = L.map('mapa', {
+                    zoomControl: false,
+                    attributionControl: false
+                })
+                .setView([initLat, initLng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(mapa);
+            L.control.zoom({
+                position: 'bottomleft'
+            }).addTo(mapa);
+
+            let timer;
+            mapa.on('moveend', () => {
+                if (!gpsListo) return;
+                clearTimeout(timer);
+                timer = setTimeout(actualizarCoords, 600);
+            });
+
+            geocodificarInverso(initLat, initLng).then(() => {
+                gpsListo = true;
+            });
+            setTimeout(() => mapa.invalidateSize(), 100);
+        }
+
+        function actualizarCoords() {
+            const c = mapa.getCenter();
+            const lat = c.lat.toFixed(7);
+            const lng = c.lng.toFixed(7);
+            document.getElementById('input-lat').value = lat;
+            document.getElementById('input-lng').value = lng;
+            geocodificarInverso(lat, lng);
+        }
+
+        async function geocodificarInverso(lat, lng) {
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`
+                    );
+                const data = await res.json();
+                const addr = data.address || {};
+                const texto = data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : '—';
+                document.getElementById('texto-dir').textContent = texto;
+                const partes = [
+                    addr.road || addr.pedestrian || '',
+                    addr.suburb || addr.neighbourhood || '',
+                    addr.city || addr.town || addr.village || '',
+                    addr.state || '', addr.postcode || '', 'México'
+                ].filter(Boolean);
+                const dir = partes.join(', ');
+                if (dir) document.getElementById('input-direccion').value = dir;
+            } catch (e) {
+                document.getElementById('texto-dir').textContent = 'No se pudo detectar la dirección';
+            }
+        }
+
+        function irAMiUbicacion() {
+            if (!navigator.geolocation) return alert('Tu navegador no soporta geolocalización');
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    gpsListo = true;
+                    mapa.setView([pos.coords.latitude, pos.coords.longitude], 17);
+                    actualizarCoords();
+                },
+                () => alert('No se pudo obtener tu ubicación.'), {
+                    timeout: 8000,
+                    enableHighAccuracy: true
+                }
+            );
+        }
+
+        async function buscarDir() {
+            const q = document.getElementById('buscar-dir').value.trim();
+            if (!q) return;
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    gpsListo = true;
+                    mapa.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 17);
+                    actualizarCoords();
+                } else alert('No se encontró esa dirección.');
+            } catch (e) {
+                alert('Error al buscar.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('buscar-dir')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarDir();
+                }
+            });
+        });
+
+        // ── ARCHIVOS ───────────────────────────────────────
+        function previewFachada(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('fachada-name').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('preview-fachada');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showName(event, id) {
+            const file = event.target.files[0];
+            if (file) document.getElementById(id).textContent = '📎 ' + file.name;
+        }
+    </script>
+</body>
+
+</html>

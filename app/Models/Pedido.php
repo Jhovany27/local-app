@@ -43,17 +43,44 @@ class Pedido extends Model
 		'ped_fecha_pedido',
 		'ped_total',
 		'ped_tipo_entrega',
+		'ped_estado',
 		'ped_fk_cliente',
-		'ped_fk_tienda'
+		'ped_fk_tienda',
+		'ped_confirmado_tienda',
 	];
 
 	public function cliente()
 	{
-		return $this->belongsTo(Cliente::class, 'ped_fk_cliente');
+		return $this->belongsTo(\App\Models\Cliente::class, 'ped_fk_cliente', 'cli_id');
 	}
 
 	public function tienda()
 	{
 		return $this->belongsTo(Tienda::class, 'ped_fk_tienda');
+	}
+
+	public function detalles()
+	{
+		return $this->hasMany(DetallePedido::class, 'det_fk_pedido', 'ped_id');
+	}
+
+	public function estados()
+	{
+		return $this->hasMany(EstadoPedido::class, 'esp_fk_pedido', 'ped_id');
+	}
+
+	public function pago()
+	{
+		return $this->hasOne(Pago::class, 'pag_fk_pedido', 'ped_id');
+	}
+
+	public function asignacion()
+	{
+		return $this->hasOne(\App\Models\AsignacionRepartidor::class, 'asr_fk_pedido', 'ped_id');
+	}
+
+	public function venta()
+	{
+		return $this->hasOne(Venta::class, 'ven_fk_pedido', 'ped_id');
 	}
 }

@@ -1,0 +1,72 @@
+/* =============================================
+   pendiente.css
+   Solo lo que Tailwind NO puede hacer
+   ============================================= */
+
+@keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    50%       { box-shadow: 0 0 0 18px rgba(255, 255, 255, 0); }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+
+.status-icon {
+    animation: pulse-ring 2.5s ease-in-out infinite;
+}
+
+.badge-dot {
+    animation: blink 1.8s ease-in-out infinite;
+}
+
+.panel-left::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.panel-left::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    right: -40px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+}
+
+.bg-body::before {
+    content: '';
+    position: fixed;
+    top: -120px;
+    right: -120px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #a8df1130, #a8df1105);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px;
+    left: -80px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #a8df1120, transparent);
+    pointer-events: none;
+    z-index: 0;
+}

@@ -49,6 +49,6 @@ class DocumentoRepartidor extends Model
 
 	public function tipo_documento()
 	{
-		return $this->belongsTo(TipoDocumento::class, 'dor_fk_tipo_documento');
+		return $this->belongsTo(TipoDocumentoRepartidor::class, 'dor_fk_tipo_documento');
 	}
 }

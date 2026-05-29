@@ -1,0 +1,13 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#7774
+    [34mall[39m: [
+      [34;4mApp\Models\Rol[39;24m {#7666
+        [34mrol_id[39m: [35m1[39m,
+        [34mrol_nombre[39m: "[32mAdmin[39m",
+        [34mpivot[39m: [34;4mIlluminate\Database\Eloquent\Relations\Pivot[39;24m {#7668
+          [34muser_id[39m: [35m4[39m,
+          [34musr_fk_rol[39m: [35m1[39m,
+        },
+      },
+    ],
+  }
+

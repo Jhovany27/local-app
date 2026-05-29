@@ -21,6 +21,7 @@ class TipoDocumentoTiendaResource extends Resource
     protected static ?string $model = TipoDocumentoTienda::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|\UnitEnum|null $navigationGroup = 'Tablas';
 
     public static function form(Schema $schema): Schema
     {
