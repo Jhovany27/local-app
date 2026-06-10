@@ -38,10 +38,9 @@ class RevisionTienda extends Page
     public function aprobar(): void
     {
         DB::transaction(function () {
-            $this->tienda->update([
-                'tie_estado'          => Tienda::ESTADO_APROBADA,
-                'tie_motivo_rechazo'  => null,
-            ]);
+            $this->tienda->tie_estado         = Tienda::ESTADO_APROBADA;
+            $this->tienda->tie_motivo_rechazo = null;
+            $this->tienda->save();
 
             $user = $this->tienda->user;
             if ($user && !$user->hasRol('tienda')) {
@@ -63,10 +62,9 @@ class RevisionTienda extends Page
     {
         $motivo = $data['motivo'] ?? null;
 
-        $this->tienda->update([
-            'tie_estado'         => Tienda::ESTADO_RECHAZADA,
-            'tie_motivo_rechazo' => $motivo,
-        ]);
+        $this->tienda->tie_estado         = Tienda::ESTADO_RECHAZADA;
+        $this->tienda->tie_motivo_rechazo = $motivo;
+        $this->tienda->save();
 
         Notification::make()
             ->title('Tienda rechazada')

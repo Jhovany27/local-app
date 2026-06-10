@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Pagos\Pages;
 
 use App\Filament\Resources\Pagos\PagoResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPagos extends ListRecords
@@ -12,8 +11,6 @@ class ListPagos extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            CreateAction::make(),
-        ];
+        return [];
     }
 }

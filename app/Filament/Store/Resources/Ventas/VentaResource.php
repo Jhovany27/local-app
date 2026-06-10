@@ -19,7 +19,7 @@ class VentaResource extends Resource
 
     protected static ?string $navigationLabel = 'Historial de ventas';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 6;
 
     public static function canCreate(): bool
     {

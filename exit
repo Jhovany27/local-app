@@ -1,0 +1,27 @@
+[90m= [39m[34;4mApp\Models\Pedido[39;24m {#7767
+    [34mped_id[39m: [35m41[39m,
+    [34mped_codigo[39m: "[32mPED-CFAST71F[39m",
+    [34mped_fecha_pedido[39m: "[32m2026-06-05 17:19:24[39m",
+    [34mped_total[39m: "[32m55.10[39m",
+    [34mped_costo_envio[39m: "[32m35.10[39m",
+    [34mped_fk_direccion[39m: [35m7[39m,
+    [34mped_tipo_entrega[39m: "[32mDomicilio[39m",
+    [34mped_fk_cliente[39m: [35m4[39m,
+    [34mped_fk_tienda[39m: [35m5[39m,
+    [34mped_estado[39m: "[32mlisto[39m",
+    [34mped_confirmado_tienda[39m: [35m0[39m,
+    [34mdireccion[39m: [34;4mApp\Models\Direccion[39;24m {#7344
+      [34mdrc_id[39m: [35m7[39m,
+      [34mdrc_calle[39m: "[32mCalle Cecilio Cupido Rosado[39m",
+      [34mdrc_numero[39m: "[32mprimer piso[39m",
+      [34mdrc_colonia[39m: "[32mColonia Gaviotas Norte[39m",
+      [34mdrc_ciudad[39m: "[32mVillahermosa[39m",
+      [34mdrc_estado[39m: "[32mTabasco[39m",
+      [34mdrc_codigo_postal[39m: [35m86090[39m,
+      [34mdrc_referencias[39m: "[32mfrente a la polleria[39m",
+      [34mdrc_latitud[39m: [33m17.9813[39m,
+      [34mdrc_longitud[39m: [33m-92.9194[39m,
+      [34muser_id[39m: [35m13[39m,
+    },
+  }
+

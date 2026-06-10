@@ -34,19 +34,28 @@ class RepartidorAuthController extends Controller
         }
 
         $request->session()->regenerate();
-        return $this->redirigirSegunEstado(Auth::user());
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user->hasVerifiedEmail()) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+        }
+
+        return $this->redirigirSegunEstado($user);
     }
 
     private function redirigirSegunEstado(\App\Models\User $user)
     {
-        // Si no tiene rol repartidor → solicitar datos de repartidor
         if (!$user->hasRol('repartidor')) {
             return redirect()->route('repartidor.completar-perfil');
         }
 
         $repartidor = $user->repartidors()->first();
+        $estado     = $repartidor ? (int)$repartidor->rep_estado : -1;
 
-        if (!$repartidor || (int)$repartidor->rep_estado === 0) {
+        if (!$repartidor || $estado === 0 || $estado === 2) {
             return redirect()->route('repartidor.pendiente');
         }
 
@@ -66,6 +75,13 @@ class RepartidorAuthController extends Controller
             'per_paterno'       => ['required', 'string', 'max:255'],
             'per_telefono'      => ['required', 'string', 'max:30'],
             'rep_tipo_vehiculo' => ['required', 'in:Motocicleta,Automovil,Bicicleta,Pie'],
+            'rep_lat'           => ['nullable', 'numeric'],
+            'rep_lng'           => ['nullable', 'numeric'],
+            'rep_radio_km'      => ['nullable', 'integer', 'min:1', 'max:50'],
+            'rep_cp'            => ['nullable', 'string', 'max:15'],
+            'rep_colonia'       => ['nullable', 'string', 'max:200'],
+            'rep_entidad'       => ['nullable', 'string', 'max:150'],
+            'rep_ciudad'        => ['nullable', 'string', 'max:150'],
             'email'             => ['required', 'email', 'unique:users,email'],
             'password'          => ['required', 'confirmed', Password::min(8)],
             'ine'               => ['required', 'file', 'mimes:pdf', 'max:4096'],
@@ -93,9 +109,16 @@ class RepartidorAuthController extends Controller
                 ]);
             }
 
-            $repartidor = Repartidor::create([
+            $repartidor = Repartidor::forceCreate([
                 'user_id'           => $user->id,
                 'rep_tipo_vehiculo' => $data['rep_tipo_vehiculo'],
+                'rep_lat'           => $data['rep_lat']      ?? null,
+                'rep_lng'           => $data['rep_lng']      ?? null,
+                'rep_radio_km'      => $data['rep_radio_km'] ?? 10,
+                'rep_cp'            => $data['rep_cp']       ?? null,
+                'rep_colonia'       => $data['rep_colonia']  ?? null,
+                'rep_entidad'       => $data['rep_entidad']  ?? null,
+                'rep_ciudad'        => $data['rep_ciudad']   ?? null,
                 'rep_estado'        => 0,
             ]);
 
@@ -104,7 +127,11 @@ class RepartidorAuthController extends Controller
         });
 
         Auth::attempt(['email' => $data['email'], 'password' => $data['password']]);
-        return redirect()->route('repartidor.pendiente');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->sendEmailVerificationNotification();
+
+        return redirect()->route('repartidor.verification.notice');
     }
 
     // ── COMPLETAR PERFIL (usuario ya logueado sin rol repartidor) ──
@@ -114,12 +141,17 @@ class RepartidorAuthController extends Controller
         $user = Auth::user();
         abort_unless($user, 403);
 
-        // Si ya tiene rol repartidor → redirigir
         if ($user->hasRol('repartidor')) {
-            return $this->redirigirSegunEstado($user);
+            $repartidor = $user->repartidors()->first();
+            // Permitir re-envío si fue rechazado
+            if (!$repartidor || (int)$repartidor->rep_estado !== 2) {
+                return $this->redirigirSegunEstado($user);
+            }
         }
 
-        return view('repartidor.auth.completar-perfil', compact('user'));
+        $rechazado  = $user->hasRol('repartidor');
+        $repartidor = $user->hasRol('repartidor') ? $user->repartidors()->first() : null;
+        return view('repartidor.auth.completar-perfil', compact('user', 'rechazado', 'repartidor'));
     }
 
     public function completarPerfil(Request $request)
@@ -130,6 +162,13 @@ class RepartidorAuthController extends Controller
 
         $data = $request->validate([
             'rep_tipo_vehiculo' => ['required', 'in:Motocicleta,Automovil,Bicicleta,Pie'],
+            'rep_lat'           => ['nullable', 'numeric'],
+            'rep_lng'           => ['nullable', 'numeric'],
+            'rep_radio_km'      => ['nullable', 'integer', 'min:1', 'max:50'],
+            'rep_cp'            => ['nullable', 'string', 'max:15'],
+            'rep_colonia'       => ['nullable', 'string', 'max:200'],
+            'rep_entidad'       => ['nullable', 'string', 'max:150'],
+            'rep_ciudad'        => ['nullable', 'string', 'max:150'],
             'per_telefono'      => ['nullable', 'string', 'max:30'],
             'ine'               => ['required', 'file', 'mimes:pdf', 'max:4096'],
             'licencia'          => ['required', 'file', 'mimes:pdf', 'max:4096'],
@@ -143,18 +182,24 @@ class RepartidorAuthController extends Controller
             if ($telefono && $user->persona) {
                 $user->persona->update(['per_telefono' => $telefono]);
             }
-            $repartidor = Repartidor::firstOrCreate(
-                ['user_id' => $user->id],
-                [
+            $repartidor = Repartidor::where('user_id', $user->id)->first()
+                ?? Repartidor::forceCreate([
+                    'user_id'           => $user->id,
                     'rep_tipo_vehiculo' => $data['rep_tipo_vehiculo'],
                     'rep_estado'        => 0,
-                ]
-            );
+                ]);
 
-            $repartidor->update([
-                'rep_tipo_vehiculo' => $data['rep_tipo_vehiculo'],
-                'rep_estado'        => 0,
-            ]);
+            $repartidor->rep_tipo_vehiculo  = $data['rep_tipo_vehiculo'];
+            $repartidor->rep_lat            = $data['rep_lat']      ?? null;
+            $repartidor->rep_lng            = $data['rep_lng']      ?? null;
+            $repartidor->rep_radio_km       = $data['rep_radio_km'] ?? 10;
+            $repartidor->rep_cp             = $data['rep_cp']       ?? null;
+            $repartidor->rep_colonia        = $data['rep_colonia']  ?? null;
+            $repartidor->rep_entidad        = $data['rep_entidad']  ?? null;
+            $repartidor->rep_ciudad         = $data['rep_ciudad']   ?? null;
+            $repartidor->rep_estado         = 0;
+            $repartidor->rep_motivo_rechazo = null;
+            $repartidor->save();
 
             // Asignar rol repartidor si no lo tiene
             if (!$user->hasRol('repartidor')) {
@@ -206,7 +251,7 @@ class RepartidorAuthController extends Controller
             return redirect()->route('repartidor.index');
         }
 
-        return view('repartidor.auth.pendiente');
+        return view('repartidor.auth.pendiente', compact('repartidor'));
     }
 
     // ── LOGOUT ────────────────────────────────────────────

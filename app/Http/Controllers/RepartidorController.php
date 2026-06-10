@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PedidoActualizado;
 use App\Models\AsignacionRepartidor;
 use App\Models\DisponibilidadRepar;
 use App\Models\EstadoPedido;
@@ -27,10 +28,13 @@ class RepartidorController extends Controller
     {
         $repartidor = $this->getRepartidor();
 
-        $pedidos = Pedido::with(['tienda', 'detalles'])
+        $pedidos = Pedido::with(['tienda', 'detalles', 'pago'])
             ->where('ped_estado', 'listo')
             ->where('ped_tipo_entrega', 'domicilio')
             ->whereDoesntHave('asignacion', fn($q) => $q->whereIn('asr_estado', [0, 1, 2]))
+            ->when($repartidor->rep_ciudad, function ($q) use ($repartidor) {
+                $q->whereHas('direccion', fn($d) => $d->where('drc_ciudad', 'LIKE', '%' . $repartidor->rep_ciudad . '%'));
+            })
             ->latest('ped_fecha_pedido')
             ->get();
 
@@ -49,13 +53,30 @@ class RepartidorController extends Controller
     // ── DETALLE PEDIDO ────────────────────────────────────
     public function show(int $pedidoId)
     {
-        $pedido = Pedido::with(['tienda', 'detalles.producto', 'cliente.user.persona', 'pago'])
+        $repartidor = $this->getRepartidor();
+
+        $pedido = Pedido::with([
+            'tienda',
+            'detalles.producto',
+            'cliente.user.persona',
+            'cliente.user.direccions',
+            'direccion',
+            'pago',
+        ])
             ->where('ped_id', $pedidoId)
             ->where('ped_estado', 'listo')
             ->where('ped_tipo_entrega', 'domicilio')
+            ->where(function ($q) use ($repartidor) {
+                // Disponible (sin asignación activa) o ya asignado a este repartidor
+                $q->whereDoesntHave('asignacion')
+                  ->orWhereHas('asignacion', fn($q2) => $q2->where('asr_fk_repartidor', $repartidor->rep_id));
+            })
             ->firstOrFail();
 
-        return view('repartidor.pedido', compact('pedido'));
+        $direccion = $pedido->direccion
+            ?? $pedido->cliente?->user?->direccions()->latest('drc_id')->first();
+
+        return view('repartidor.pedido', compact('pedido', 'direccion'));
     }
 
     // ── ACEPTAR ───────────────────────────────────────────
@@ -77,7 +98,7 @@ class RepartidorController extends Controller
 
         AsignacionRepartidor::create([
             'asr_fecha'         => now(),
-            'asr_estado'        => 0, // yendo a tienda
+            'asr_estado'        => 0,
             'asr_fk_repartidor' => $repartidor->rep_id,
             'asr_fk_pedido'     => $pedido->ped_id,
         ]);
@@ -86,6 +107,10 @@ class RepartidorController extends Controller
             ['dir_fk_repartidor' => $repartidor->rep_id],
             ['dir_estado' => 'ocupado', 'dir_actualizacion' => now()]
         );
+
+        //  Notificar al cliente
+        $pedido->load(['cliente.user', 'asignacion']);
+        event(new PedidoActualizado($pedido));
 
         return redirect()->route('repartidor.en-camino', $pedido->ped_id);
     }
@@ -115,13 +140,17 @@ class RepartidorController extends Controller
             ->where('asr_estado', 0)
             ->firstOrFail();
 
-        $asignacion->update(['asr_estado' => 1]); // recogiendo
+        $asignacion->update(['asr_estado' => 1]);
 
         EstadoPedido::create([
             'esp_nombre'       => 'en_camino',
             'esp_fecha_cambio' => now(),
             'esp_fk_pedido'    => $pedidoId,
         ]);
+
+        //  Notificar al cliente
+        $pedido = Pedido::with(['cliente.user', 'asignacion'])->find($pedidoId);
+        event(new PedidoActualizado($pedido));
 
         return redirect()->route('repartidor.checklist', $pedidoId);
     }
@@ -131,7 +160,7 @@ class RepartidorController extends Controller
     {
         $repartidor = $this->getRepartidor();
 
-        $asignacion = AsignacionRepartidor::where('asr_fk_repartidor', $repartidor->rep_id)
+        AsignacionRepartidor::where('asr_fk_repartidor', $repartidor->rep_id)
             ->where('asr_fk_pedido', $pedidoId)
             ->where('asr_estado', 1)
             ->firstOrFail();
@@ -152,7 +181,11 @@ class RepartidorController extends Controller
             ->where('asr_estado', 1)
             ->firstOrFail();
 
-        $asignacion->update(['asr_estado' => 2]); // entregando
+        $asignacion->update(['asr_estado' => 2]);
+
+        //  Notificar al cliente
+        $pedido = Pedido::with(['cliente.user', 'asignacion'])->find($pedidoId);
+        event(new PedidoActualizado($pedido));
 
         return redirect()->route('repartidor.entregar', $pedidoId);
     }
@@ -172,13 +205,12 @@ class RepartidorController extends Controller
             'detalles.producto',
             'cliente.user.persona',
             'cliente.user.direccions',
+            'direccion',
             'pago',
         ])->findOrFail($pedidoId);
 
-        // Buscar dirección activa del cliente
-        $direccion = $pedido->cliente?->user?->direccions()
-            ->latest('drc_id')
-            ->first();
+        $direccion = $pedido->direccion
+            ?? $pedido->cliente?->user?->direccions()->latest('drc_id')->first();
 
         return view('repartidor.entregar', compact('pedido', 'direccion'));
     }
@@ -194,10 +226,11 @@ class RepartidorController extends Controller
             ->firstOrFail();
 
         DB::transaction(function () use ($asignacion, $pedidoId, $repartidor) {
-            $asignacion->update(['asr_estado' => 3]); // completado
+            $asignacion->update(['asr_estado' => 3]);
 
             $pedido = Pedido::find($pedidoId);
-            $pedido->update(['ped_estado' => 'completado']);
+            $pedido->ped_estado = 'completado';
+            $pedido->save();
 
             EstadoPedido::create([
                 'esp_nombre'       => 'completado',
@@ -207,17 +240,21 @@ class RepartidorController extends Controller
 
             $pedido->pago?->update(['pag_estado' => 'Aceptado']);
 
-            // Liberar repartidor
             DisponibilidadRepar::updateOrCreate(
                 ['dir_fk_repartidor' => $repartidor->rep_id],
                 ['dir_estado' => 'disponible', 'dir_actualizacion' => now()]
             );
+
+            //  Notificar al cliente
+            $pedido->load(['cliente.user', 'asignacion']);
+            event(new PedidoActualizado($pedido));
         });
 
         return redirect()->route('repartidor.index')
             ->with('success', '¡Pedido entregado! Buen trabajo.');
     }
 
+    // ── HISTORIAL ─────────────────────────────────────────
     public function historial()
     {
         $repartidor = $this->getRepartidor();
@@ -227,7 +264,7 @@ class RepartidorController extends Controller
             'pedido.cliente.user.persona',
         ])
             ->where('asr_fk_repartidor', $repartidor->rep_id)
-            ->where('asr_estado', 3) // completado
+            ->where('asr_estado', 3)
             ->latest('asr_fecha')
             ->get();
 

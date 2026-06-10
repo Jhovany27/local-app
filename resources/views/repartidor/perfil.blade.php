@@ -5,284 +5,7 @@
     <meta charset="UTF-8">
     <title>Mi perfil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @vite('resources/css/app.css')
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #f0f2f0;
-            display: flex;
-            justify-content: center;
-            font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-            min-height: 100vh;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 430px;
-            min-height: 100vh;
-            background: white;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.25rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .btn-back {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .btn-back svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .header-logo img {
-            height: 36px;
-        }
-
-        .hero {
-            background: linear-gradient(135deg, #a8df11, #7cc10a);
-            padding: 2rem 1.5rem 3rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            position: relative;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 24px;
-            background: white;
-            border-radius: 24px 24px 0 0;
-        }
-
-        .avatar {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.25);
-            border: 3px solid rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .avatar svg {
-            width: 36px;
-            height: 36px;
-            color: white;
-        }
-
-        .hero-nombre {
-            font-size: 1.1rem;
-            font-weight: 900;
-            color: white;
-        }
-
-        .hero-email {
-            font-size: 0.78rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            background: rgba(255, 255, 255, 0.25);
-            color: white;
-            font-size: 0.68rem;
-            font-weight: 700;
-            padding: 0.2rem 0.75rem;
-            border-radius: 999px;
-        }
-
-        .body {
-            flex: 1;
-            padding: 1.5rem 1.25rem 7rem;
-        }
-
-        .seccion-titulo {
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #a8df11;
-            margin-bottom: 0.75rem;
-            padding-left: 0.25rem;
-        }
-
-        .seccion {
-            margin-bottom: 1.5rem;
-        }
-
-        .info-card {
-            background: white;
-            border: 1.5px solid #e8f5d0;
-            border-radius: 1rem;
-            overflow: hidden;
-        }
-
-        .info-row {
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-            padding: 0.9rem 1rem;
-            border-bottom: 1px solid #f5f5f5;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 0.65rem;
-            background: #f0fde0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .info-icon svg {
-            width: 16px;
-            height: 16px;
-            color: #4a8a06;
-        }
-
-        .info-content {
-            flex: 1;
-        }
-
-        .info-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #bbb;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.1rem;
-        }
-
-        .info-value {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #111;
-        }
-
-        .acciones-card {
-            background: white;
-            border: 1.5px solid #e8f5d0;
-            border-radius: 1rem;
-            overflow: hidden;
-        }
-
-        .accion-row {
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-            padding: 0.9rem 1rem;
-            border-bottom: 1px solid #f5f5f5;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .accion-row:last-child {
-            border-bottom: none;
-        }
-
-        .accion-row:hover {
-            background: #fafff5;
-        }
-
-        .accion-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 0.65rem;
-            background: #f0fde0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .accion-icon svg {
-            width: 16px;
-            height: 16px;
-            color: #4a8a06;
-        }
-
-        .accion-icon.danger {
-            background: #fff1f0;
-        }
-
-        .accion-icon.danger svg {
-            color: #d41b11;
-        }
-
-        .accion-label {
-            flex: 1;
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #111;
-        }
-
-        .accion-label.danger {
-            color: #d41b11;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
-            background: white;
-            border-top: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-around;
-            padding: 0.85rem 0;
-            z-index: 10;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: #bbb;
-        }
-
-        .nav-item.active {
-            color: #a8df11;
-        }
-
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-        }
-    </style>
+    @vite('resources/css/repartidor/perfil.css')
 </head>
 
 <body>
@@ -304,15 +27,21 @@
         {{-- HERO --}}
         <div class="hero">
             <div class="avatar">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                </svg>
+                @if ($fotoPerfil)
+                    <img src="{{ asset('storage/' . $fotoPerfil->dor_ruta) }}"
+                         alt="Foto de perfil"
+                         style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                @else
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                    </svg>
+                @endif
             </div>
             <p class="hero-nombre">{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</p>
             <p class="hero-email">{{ $user->email }}</p>
-            <span class="hero-badge">🏍 {{ $repartidor->rep_tipo_vehiculo }}</span>
+            <span class="hero-badge"> {{ $repartidor->rep_tipo_vehiculo }}</span>
         </div>
 
         <div class="body">
@@ -345,6 +74,31 @@
                         <div class="info-content">
                             <p class="info-label">Correo</p>
                             <p class="info-value">{{ $user->email }}</p>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon" style="{{ $user->hasVerifiedEmail() ? 'background:#f0fde0;' : 'background:#fff7ed;' }}">
+                            @if ($user->hasVerifiedEmail())
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="#4a8a06">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="#f59e0b">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                </svg>
+                            @endif
+                        </div>
+                        <div class="info-content">
+                            <p class="info-label">Verificación de correo</p>
+                            @if ($user->hasVerifiedEmail())
+                                <p class="info-value" style="color:#4a8a06;font-weight:700;">Verificado</p>
+                            @else
+                                <p class="info-value" style="color:#f59e0b;font-weight:700;">Pendiente de verificación</p>
+                            @endif
                         </div>
                     </div>
                     <div class="info-row">

@@ -18,7 +18,7 @@ class NuevaVenta extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
     protected static ?string $navigationLabel = 'Nueva Venta';
     protected static ?string $title = 'Nueva Venta';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     // Búsqueda
     public string $busqueda = '';

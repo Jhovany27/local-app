@@ -92,16 +92,26 @@
 
             {{-- FILTROS — siempre visibles --}}
             <div class="filtros">
-                <button class="filtro-btn active">Todas</button>
-                <button class="filtro-btn">★ Favoritas</button>
+                <button class="filtro-btn active" data-filtro="todas">Todas</button>
+                <button class="filtro-btn" data-filtro="favoritas">★ Favoritas</button>
             </div>
 
             {{-- LISTA — siempre visible --}}
-            <p class="seccion-label">Tiendas cercanas</p>
+            @php
+                $dirActiva = session('direccion_id') ? \App\Models\Direccion::find(session('direccion_id')) : null;
+            @endphp
+            <p class="seccion-label">
+                @if ($dirActiva && $dirActiva->drc_ciudad)
+                    Tiendas en {{ $dirActiva->drc_ciudad }}
+                @else
+                    Tiendas cercanas
+                @endif
+            </p>
 
             <div class="tienda-list">
                 @forelse($tiendas as $tienda)
-                    <a href="{{ route('cliente.tienda', $tienda->tie_id) }}" class="tienda-card">
+                    <div class="tienda-card-wrapper" data-tienda-id="{{ $tienda->tie_id }}" data-favorito="{{ auth()->check() && auth()->user()->hasRol('cliente') && auth()->user()->cliente->favoritosTiendas()->where('fav_fk_tienda', $tienda->tie_id)->exists() ? 'true' : 'false' }}">
+                        <a href="{{ route('cliente.tienda', $tienda->tie_id) }}" class="tienda-card">
 
                         @if ($tienda->fachada?->fac_ruta)
                             <img src="{{ asset('storage/' . $tienda->fachada->fac_ruta) }}"
@@ -125,14 +135,14 @@
                             </span>
                         </div>
 
-                        <div class="tienda-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-
                     </a>
+
+                    <button class="btn-favorito" onclick="toggleFavoritoTienda(event, {{ $tienda->tie_id }})">
+                        <svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.312-2.733C5.099 3.75 3 5.765 3 8.25c0 7.22 9 13 9 13s9-5.78 9-13Z" />
+                        </svg>
+                    </button>
+                    </div>
                 @empty
                     <div class="empty-state">
                         <div class="empty-icon">
@@ -188,14 +198,165 @@
 
     </div>
 
+    {{-- BOTTOM SHEET: seleccionar dirección --}}
+    @if (!empty($sinDireccion) && $sinDireccion)
+    <style>
+        .dir-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.45);
+            display: flex; align-items: flex-end;
+        }
+        .dir-sheet {
+            width: 100%; max-width: 480px; margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1rem 1.25rem 2rem;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .dir-handle {
+            width: 40px; height: 4px; background: #e0e0e0;
+            border-radius: 99px; margin: 0 auto 1.25rem;
+        }
+        .dir-title {
+            font-size: 1.1rem; font-weight: 900; color: #111;
+            margin-bottom: 0.3rem;
+        }
+        .dir-subtitle {
+            font-size: 0.78rem; color: #aaa; margin-bottom: 1.25rem; line-height: 1.5;
+        }
+        .dir-item {
+            display: flex; align-items: center; gap: 0.85rem;
+            width: 100%; background: none; border: 1.5px solid #e5e7eb;
+            border-radius: 0.85rem; padding: 0.85rem 1rem;
+            margin-bottom: 0.65rem; cursor: pointer;
+            text-align: left; transition: border-color 0.2s;
+        }
+        .dir-item:hover { border-color: #a8df11; }
+        .dir-icon {
+            width: 36px; height: 36px; border-radius: 0.6rem;
+            background: #f0fde0; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .dir-icon svg { width: 16px; height: 16px; color: #4a8a06; }
+        .dir-name { font-size: 0.85rem; font-weight: 700; color: #111; }
+        .dir-addr { font-size: 0.72rem; color: #aaa; margin-top: 0.1rem; }
+        .dir-empty {
+            text-align: center; color: #aaa; font-size: 0.82rem;
+            padding: 1.5rem 0; margin-bottom: 0.5rem;
+        }
+        .btn-agregar-dir {
+            display: block; width: 100%; text-align: center;
+            background: linear-gradient(135deg, #a8df11, #7cc10a);
+            color: #1a1a1a; font-weight: 800; font-size: 0.9rem;
+            padding: 0.85rem; border-radius: 999px;
+            text-decoration: none; margin-bottom: 0.75rem;
+            box-shadow: 0 6px 20px rgba(168,223,17,0.3);
+        }
+        .btn-sin-dir {
+            display: block; width: 100%; text-align: center;
+            font-size: 0.78rem; color: #aaa; text-decoration: none;
+            padding: 0.5rem;
+        }
+        .btn-sin-dir:hover { color: #555; }
+    </style>
+
+    <div class="dir-overlay" id="dirOverlay">
+        <div class="dir-sheet">
+            <div class="dir-handle"></div>
+            <p class="dir-title">¿Dónde te entregamos?</p>
+            <p class="dir-subtitle">Selecciona una dirección para ver tiendas disponibles en tu área.</p>
+
+            @forelse ($direcciones as $dir)
+                <form method="POST" action="{{ route('cliente.direcciones.seleccionar', $dir->drc_id) }}">
+                    @csrf
+                    <input type="hidden" name="redirect" value="{{ route('cliente.index') }}">
+                    <button type="submit" class="dir-item">
+                        <div class="dir-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="dir-name">{{ $dir->drc_calle }}{{ $dir->drc_numero ? ' ' . $dir->drc_numero : '' }}</p>
+                            <p class="dir-addr">{{ $dir->drc_colonia ? $dir->drc_colonia . ', ' : '' }}{{ $dir->drc_ciudad }}</p>
+                        </div>
+                    </button>
+                </form>
+            @empty
+                <p class="dir-empty">Aún no tienes direcciones guardadas.</p>
+            @endforelse
+
+            <a href="{{ route('cliente.direcciones.create') }}" class="btn-agregar-dir">
+                + Agregar dirección
+            </a>
+            <a href="{{ route('cliente.index', ['sin_filtro' => 1]) }}" class="btn-sin-dir">
+                Explorar sin dirección
+            </a>
+        </div>
+    </div>
+    @endif
+
     <script>
+        let filtroActual = 'todas';
+
+        // Buscar tiendas
         document.getElementById('buscador').addEventListener('keyup', function() {
             const filtro = this.value.toLowerCase();
-            document.querySelectorAll('.tienda-card').forEach(card => {
+            document.querySelectorAll('.tienda-card-wrapper').forEach(wrapper => {
+                const card = wrapper.querySelector('.tienda-card');
                 const nombre = card.querySelector('.tienda-nombre').textContent.toLowerCase();
-                card.style.display = nombre.includes(filtro) ? 'flex' : 'none';
+                const coincide = nombre.includes(filtro);
+                const esVisible = filtroActual === 'todas' ? true : (wrapper.dataset.favorito === 'true');
+                wrapper.style.display = coincide && esVisible ? '' : 'none';
             });
         });
+
+        // Filtros
+        document.querySelectorAll('.filtro-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                filtroActual = this.dataset.filtro;
+
+                const busqueda = document.getElementById('buscador').value.toLowerCase();
+                document.querySelectorAll('.tienda-card-wrapper').forEach(wrapper => {
+                    const nombre = wrapper.querySelector('.tienda-nombre').textContent.toLowerCase();
+                    const coincide = nombre.includes(busqueda);
+                    const esVisible = filtroActual === 'todas' ? true : (wrapper.dataset.favorito === 'true');
+                    wrapper.style.display = coincide && esVisible ? '' : 'none';
+                });
+            });
+        });
+
+        // Toggle favorito tienda
+        function toggleFavoritoTienda(event, tiendaId) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const wrapper = event.target.closest('.tienda-card-wrapper');
+            const esFavorito = wrapper.dataset.favorito === 'true';
+            const url = esFavorito
+                ? '{{ route("cliente.favorito.tienda.quitar") }}'
+                : '{{ route("cliente.favorito.tienda.agregar") }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ tienda_id: tiendaId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    wrapper.dataset.favorito = esFavorito ? 'false' : 'true';
+                    const icon = wrapper.querySelector('.heart-icon').closest('.btn-favorito');
+                    icon.classList.toggle('favorito-activo');
+                }
+            });
+        }
     </script>
 </body>
 

@@ -49,7 +49,7 @@
                                 </p>
                                 <p class="rp-detalle">{{ $rep->user?->email }}</p>
                                 <p class="rp-detalle">{{ $persona?->per_telefono ?? '—' }}</p>
-                                <p class="rp-detalle">🚗 {{ $rep->rep_tipo_vehiculo }}</p>
+                                <p class="rp-detalle">{{ $rep->rep_tipo_vehiculo }}</p>
                             </div>
 
                             <div class="rp-divider"></div>

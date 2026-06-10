@@ -117,7 +117,7 @@
                                     </p>
                                     <p class="pend-det">{{ $rep->user?->email }}</p>
                                     <p class="pend-det">{{ $persona?->per_telefono ?? '—' }}</p>
-                                    <p class="pend-det">🚗 {{ $rep->rep_tipo_vehiculo }}</p>
+                                    <p class="pend-det">{{ $rep->rep_tipo_vehiculo }}</p>
 
                                     <div class="divider"></div>
 
@@ -140,8 +140,8 @@
                                     <div class="divider"></div>
 
                                     <div style="display:flex; gap:0.5rem;">
-                                        <button wire:click="rechazarRepartidor({{ $rep->rep_id }})"
-                                            wire:confirm="¿Rechazar a este repartidor?" class="btn-rechazar">
+                                        <button wire:click="abrirModalRechazo({{ $rep->rep_id }})"
+                                            class="btn-rechazar">
                                             Rechazar
                                         </button>
                                         <button wire:click="aprobarRepartidor({{ $rep->rep_id }})"
@@ -363,5 +363,127 @@
         .btn-rechazar:hover {
             background: #fff1f0;
         }
+
+        /* ── MODAL RECHAZO ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1.5rem;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #111;
+            margin-bottom: 0.35rem;
+        }
+
+        .modal-subtitle {
+            font-size: 0.78rem;
+            color: #888;
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.85rem;
+            color: #111;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-textarea:focus {
+            border-color: #d41b11;
+            box-shadow: 0 0 0 3px rgba(212,27,17,0.08);
+        }
+
+        .modal-error {
+            font-size: 0.75rem;
+            color: #d41b11;
+            margin-top: 0.35rem;
+            font-weight: 600;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 0.65rem;
+            margin-top: 1.25rem;
+        }
+
+        .btn-modal-cancel {
+            flex: 1;
+            background: #f0f0f0;
+            color: #555;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.7rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-modal-rechazar {
+            flex: 2;
+            background: #d41b11;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 0.7rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-modal-rechazar:hover {
+            background: #b91510;
+        }
     </style>
+
+    {{-- MODAL: motivo de rechazo --}}
+    @if ($this->rechazandoId)
+        <div class="modal-overlay" wire:click.self="cancelarRechazo">
+            <div class="modal-box">
+                <p class="modal-title">Motivo del rechazo</p>
+                <p class="modal-subtitle">El repartidor verá este mensaje y podrá corregir su solicitud.</p>
+
+                <textarea
+                    wire:model="motivoRechazoInput"
+                    class="modal-textarea"
+                    placeholder="Ej: Tu INE está vencida. Por favor sube una identificación vigente."
+                ></textarea>
+
+                @error('motivoRechazoInput')
+                    <p class="modal-error">{{ $message }}</p>
+                @enderror
+
+                <div class="modal-btns">
+                    <button wire:click="cancelarRechazo" class="btn-modal-cancel">Cancelar</button>
+                    <button wire:click="confirmarRechazo" class="btn-modal-rechazar">Confirmar rechazo</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
 </x-filament-widgets::widget>

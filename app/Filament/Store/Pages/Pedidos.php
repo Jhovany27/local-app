@@ -65,7 +65,8 @@ class Pedidos extends Page
             ->where('ped_estado', 'pendiente')
             ->firstOrFail();
 
-        $pedido->update(['ped_estado' => 'en_preparacion']);
+        $pedido->ped_estado = 'en_preparacion';
+        $pedido->save();
 
         EstadoPedido::create([
             'esp_nombre'       => 'en_preparacion',
@@ -88,7 +89,8 @@ class Pedidos extends Page
             ->where('ped_estado', 'pendiente')
             ->firstOrFail();
 
-        $pedido->update(['ped_estado' => 'cancelado']);
+        $pedido->ped_estado = 'cancelado';
+        $pedido->save();
 
         EstadoPedido::create([
             'esp_nombre'       => 'cancelado',
@@ -125,7 +127,8 @@ class Pedidos extends Page
                 }
             }
 
-            $pedido->update(['ped_estado' => 'listo']);
+            $pedido->ped_estado = 'listo';
+            $pedido->save();
 
             EstadoPedido::create([
                 'esp_nombre'       => 'listo',
@@ -153,11 +156,9 @@ class Pedidos extends Page
 
         DB::transaction(function () use ($pedido) {
 
-            //  Marcar como confirmado por tienda
-            $pedido->update([
-                'ped_estado'             => 'completado',
-                'ped_confirmado_tienda'  => true,
-            ]);
+            $pedido->ped_estado = 'completado';
+            $pedido->ped_confirmado_tienda = true;
+            $pedido->save();
 
             EstadoPedido::create([
                 'esp_nombre'       => 'completado',

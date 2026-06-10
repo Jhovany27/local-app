@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Tiendas\Tables;
 
+use App\Filament\Resources\Tiendas\TiendaResource;
 use App\Models\Tienda;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -89,7 +90,8 @@ class TiendasTable
                     ->modalHeading('¿Activar esta tienda?')
                     ->modalDescription('Se asignará el rol de tienda al propietario.')
                     ->action(function ($record) {
-                        $record->update(['tie_estado' => Tienda::ESTADO_APROBADA]);
+                        $record->tie_estado = Tienda::ESTADO_APROBADA;
+                        $record->save();
                         $user = $record->user;
                         if ($user && !$user->hasRol('tienda')) {
                             $user->roles()->attach(4);
@@ -107,7 +109,8 @@ class TiendasTable
                     ->modalHeading('¿Desactivar esta tienda?')
                     ->modalDescription('Se quitará el rol de tienda al propietario si no tiene otras tiendas activas.')
                     ->action(function ($record) {
-                        $record->update(['tie_estado' => Tienda::ESTADO_RECHAZADA]);
+                        $record->tie_estado = Tienda::ESTADO_RECHAZADA;
+                        $record->save();
 
                         // Quitar rol tienda si no tiene otras tiendas activas
                         $user = $record->user;
@@ -132,7 +135,7 @@ class TiendasTable
                     ->color('gray')
                     ->url(fn($record) => \App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => $record->user_id])),
             ])
-
+            ->recordUrl(fn($record) => TiendaResource::getUrl('view', ['record' => $record->tie_id]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

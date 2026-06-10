@@ -39,6 +39,12 @@ class ClienteAuthController extends Controller
             /** @var \App\Models\User $user */
             $user = Auth::user();
 
+            //  Verificar si el correo está confirmado
+            if (!$user->hasVerifiedEmail()) {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+            }
+
             if (!$user->hasRol('cliente')) {
                 $user->roles()->attach(2);
             }
@@ -47,7 +53,7 @@ class ClienteAuthController extends Controller
                 \App\Models\Cliente::create(['user_id' => $user->id]);
             }
 
-            // ✅ Migrar carrito de sesión a BD al iniciar sesión
+            //  Migrar carrito de sesión a BD al iniciar sesión
             \App\Http\Controllers\CarritoController::migrarSesionABD();
 
             $redirect = $request->query('redirect');
@@ -83,14 +89,12 @@ class ClienteAuthController extends Controller
 
         DB::transaction(function () use ($data) {
 
-            // Crear usuario
             $user = User::create([
                 'name'     => $data['per_nombre'] . ' ' . $data['per_paterno'],
                 'email'    => $data['email'],
                 'password' => $data['password'],
             ]);
 
-            // Crear persona
             Persona::create([
                 'per_nombre'         => $data['per_nombre'],
                 'per_paterno'        => $data['per_paterno'],
@@ -100,10 +104,8 @@ class ClienteAuthController extends Controller
                 'user_id'            => $user->id,
             ]);
 
-            // Crear cliente
             Cliente::create(['user_id' => $user->id]);
 
-            //  Asignar rol cliente automáticamente (rol_id = 2)
             $user->roles()->attach(2);
         });
 
@@ -113,7 +115,13 @@ class ClienteAuthController extends Controller
             'password' => $data['password'],
         ]);
 
-        return redirect()->route('cliente.index');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Enviar correo de verificación y redirigir
+        $user->sendEmailVerificationNotification();
+
+        return redirect()->route('verification.notice');
     }
 
     public function perfil()

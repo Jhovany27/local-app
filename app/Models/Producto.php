@@ -95,4 +95,9 @@ class Producto extends Model
     {
         return $this->hasMany(MovimientoInventario::class, 'mov_fk_producto', 'pro_id');
     }
+
+    public function favoritosDe()
+    {
+        return $this->hasMany(Favorito::class, 'fav_fk_producto', 'pro_id');
+    }
 }

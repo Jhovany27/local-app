@@ -46,6 +46,7 @@ class TiendaResource extends Resource
     {
         return [
             'index' => Pages\ListTiendas::route('/'),
+            'view'  => Pages\ViewTienda::route('/{record}'),  
         ];
     }
 }

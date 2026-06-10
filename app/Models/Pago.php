@@ -47,6 +47,11 @@ class Pago extends Model
 		'pag_fk_pedido'
 	];
 
+	protected $hidden = [
+		'pag_stripe_payment_intent',
+		'pag_stripe_charge_id',
+	];
+
 	public function pedido()
 	{
 		return $this->belongsTo(Pedido::class, 'pag_fk_pedido');

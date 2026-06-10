@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Repartidor;
 use App\Models\Tienda;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 
 class PendientesWidget extends Widget
@@ -13,6 +14,9 @@ class PendientesWidget extends Widget
     protected static ?int $sort = 1;
 
     protected int|string|array $columnSpan = 'full';
+
+    public ?int $rechazandoId = null;
+    public string $motivoRechazoInput = '';
 
     public function getTiendasProperty()
     {
@@ -33,24 +37,46 @@ class PendientesWidget extends Widget
     public function aprobarRepartidor(int $id): void
     {
         $rep  = Repartidor::findOrFail($id);
-        $rep->update(['rep_estado' => 1]);
+        $rep->rep_estado = 1;
+        $rep->save();
 
         $user = $rep->user;
         if ($user && !$user->hasRol('repartidor')) {
             $user->roles()->attach(3);
         }
 
-        \Filament\Notifications\Notification::make()
-            ->title('Repartidor aprobado')
-            ->success()->send();
+        Notification::make()->title('Repartidor aprobado')->success()->send();
     }
 
-    public function rechazarRepartidor(int $id): void
+    public function abrirModalRechazo(int $id): void
     {
-        Repartidor::findOrFail($id)->update(['rep_estado' => 2]);
+        $this->rechazandoId    = $id;
+        $this->motivoRechazoInput = '';
+    }
 
-        \Filament\Notifications\Notification::make()
-            ->title('Repartidor rechazado')
-            ->danger()->send();
+    public function cancelarRechazo(): void
+    {
+        $this->rechazandoId    = null;
+        $this->motivoRechazoInput = '';
+    }
+
+    public function confirmarRechazo(): void
+    {
+        $this->validate([
+            'motivoRechazoInput' => 'required|min:10',
+        ], [
+            'motivoRechazoInput.required' => 'Debes escribir un motivo.',
+            'motivoRechazoInput.min'      => 'El motivo debe tener al menos 10 caracteres.',
+        ]);
+
+        $rep = Repartidor::findOrFail($this->rechazandoId);
+        $rep->rep_estado           = 2;
+        $rep->rep_motivo_rechazo   = $this->motivoRechazoInput;
+        $rep->save();
+
+        $this->rechazandoId    = null;
+        $this->motivoRechazoInput = '';
+
+        Notification::make()->title('Repartidor rechazado')->danger()->send();
     }
 }

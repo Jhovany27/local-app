@@ -117,6 +117,18 @@ class RegistroTiendaController extends Controller
         return redirect()->route('registro.tienda.pendiente');
     }
 
+    public function verEstado(Tienda $tienda)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        abort_unless($user && $tienda->user_id === $user->id, 403);
+
+        abort_if($tienda->tie_estado === Tienda::ESTADO_APROBADA, 404);
+
+        return view('tienda.estado', ['tiendas' => collect([$tienda])]);
+    }
+
     public function pendiente()
     {
         /** @var \App\Models\User $user */

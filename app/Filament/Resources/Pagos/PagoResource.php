@@ -20,8 +20,11 @@ class PagoResource extends Resource
 {
     protected static ?string $model = Pago::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    protected static string|\UnitEnum|null $navigationGroup = 'Tablas';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
+    protected static string|\UnitEnum|null $navigationGroup = 'Finanzas';
+    protected static ?string $navigationLabel = 'Historial de Pagos';
+    protected static ?string $modelLabel = 'Pago';
+    protected static ?string $pluralModelLabel = 'Historial de Pagos';
 
     public static function form(Schema $schema): Schema
     {

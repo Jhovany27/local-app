@@ -11,7 +11,6 @@
 <body>
 
     <div class="app">
-
         {{-- HEADER --}}
         <div class="header">
             <a href="{{ route('cliente.tienda', $producto->pro_fk_tienda) }}" class="header-back">
@@ -33,7 +32,20 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                 </svg>
-                @php $total = collect(session('carrito', []))->sum('cantidad'); @endphp
+                @php
+                    if (Auth::check() && Auth::user()->hasRol('cliente')) {
+                        $cliente = Auth::user()->cliente;
+                        $total = $cliente
+                            ? \App\Models\Pedido::where('ped_fk_cliente', $cliente->cli_id)
+                                ->where('ped_estado', 'carrito')
+                                ->withCount('detalles')
+                                ->get()
+                                ->sum('detalles_count')
+                            : 0;
+                    } else {
+                        $total = collect(session('carrito', []))->sum('cantidad');
+                    }
+                @endphp
                 @if ($total > 0)
                     <span class="cart-badge">{{ $total }}</span>
                 @endif
@@ -81,13 +93,19 @@
 
         {{-- ACCIONES --}}
         <div class="acciones">
-            <button class="btn-lista">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor">
+            <button class="btn-lista {{ $esFavorito ? 'btn-lista--activo' : '' }}"
+                id="btn-lista"
+                data-favorito="{{ $esFavorito ? 'true' : 'false' }}"
+                data-producto-id="{{ $producto->pro_id }}"
+                @guest onclick="window.location='{{ route('cliente.login') }}'" @endguest
+                @auth onclick="toggleFavoritoDetalle(this)" @endauth>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    fill="{{ $esFavorito ? 'currentColor' : 'none' }}"
+                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                 </svg>
-                Agregar a lista
+                <span>{{ $esFavorito ? 'En tu lista' : 'Agregar a lista' }}</span>
             </button>
 
             @if ($stock > 0)
@@ -183,6 +201,38 @@
         </nav>
 
     </div>
+
+    <script>
+        function toggleFavoritoDetalle(btn) {
+            const esFavorito = btn.dataset.favorito === 'true';
+            const productoId = btn.dataset.productoId;
+            const url = esFavorito
+                ? '{{ route("cliente.favorito.producto.quitar") }}'
+                : '{{ route("cliente.favorito.producto.agregar") }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ producto_id: productoId }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+
+                const ahora = !esFavorito;
+                btn.dataset.favorito = ahora ? 'true' : 'false';
+                btn.classList.toggle('btn-lista--activo', ahora);
+
+                const svg = btn.querySelector('svg');
+                svg.setAttribute('fill', ahora ? 'currentColor' : 'none');
+
+                btn.querySelector('span').textContent = ahora ? 'En tu lista' : 'Agregar a lista';
+            });
+        }
+    </script>
 
 </body>
 

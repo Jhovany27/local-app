@@ -43,10 +43,11 @@ class Pedido extends Model
 		'ped_fecha_pedido',
 		'ped_total',
 		'ped_tipo_entrega',
-		'ped_estado',
 		'ped_fk_cliente',
 		'ped_fk_tienda',
-		'ped_confirmado_tienda',
+		'ped_costo_envio',
+		'ped_fk_direccion',
+		'ped_estado',
 	];
 
 	public function cliente()
@@ -62,6 +63,11 @@ class Pedido extends Model
 	public function detalles()
 	{
 		return $this->hasMany(DetallePedido::class, 'det_fk_pedido', 'ped_id');
+	}
+
+	public function direccion()
+	{
+		return $this->belongsTo(\App\Models\Direccion::class, 'ped_fk_direccion', 'drc_id');
 	}
 
 	public function estados()

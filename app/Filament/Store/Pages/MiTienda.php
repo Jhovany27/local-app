@@ -17,6 +17,8 @@ class MiTienda extends Page
 
     protected static ?string $navigationLabel = 'Mi tienda';
 
+    protected static ?int $navigationSort = 7;
+
     public ?Tienda $tienda = null;
 
     public function mount(): void

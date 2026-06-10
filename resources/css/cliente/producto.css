@@ -270,6 +270,16 @@ body {
 .btn-lista svg {
     width: 16px;
     height: 16px;
+    transition: fill 0.2s, color 0.2s;
+}
+
+.btn-lista--activo {
+    color: #d4af37;
+    text-decoration: none;
+}
+
+.btn-lista--activo svg {
+    color: #d4af37;
 }
 
 .btn-agregar {

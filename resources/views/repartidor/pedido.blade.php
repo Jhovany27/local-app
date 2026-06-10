@@ -5,242 +5,8 @@
     <meta charset="UTF-8">
     <title>Detalle del pedido</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @vite('resources/css/app.css')
+    @vite('resources/css/repartidor/pedido.css')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #f0f2f0;
-            display: flex;
-            justify-content: center;
-            font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-            min-height: 100vh;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 430px;
-            min-height: 100vh;
-            background: white;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.25rem;
-            border-bottom: 1px solid #f0f0f0;
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 100;
-        }
-
-        .btn-back {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .btn-back svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .header-title {
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #111;
-        }
-
-        /* Mapa */
-        #mapa {
-            width: 100%;
-            height: 240px;
-            z-index: 1;
-        }
-
-        .body {
-            flex: 1;
-            padding: 1.25rem 1.25rem 8rem;
-        }
-
-        .seccion-titulo {
-            font-size: 0.62rem;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #7ab80e;
-            margin-bottom: 0.75rem;
-            margin-top: 1.25rem;
-        }
-
-        .seccion-titulo:first-child {
-            margin-top: 0;
-        }
-
-        /* Info card */
-        .info-card {
-            background: white;
-            border: 1.5px solid #e8f5d0;
-            border-radius: 1rem;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .info-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.85rem;
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid #f5f5f5;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 0.6rem;
-            background: #f0fde0;
-            border: 1px solid #d4f0a0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .info-icon svg {
-            width: 15px;
-            height: 15px;
-            color: #4a8a06;
-        }
-
-        .info-content {
-            flex: 1;
-        }
-
-        .info-label {
-            font-size: 0.62rem;
-            font-weight: 700;
-            color: #bbb;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.1rem;
-        }
-
-        .info-val {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #111;
-        }
-
-        /* Productos */
-        .prod-list {
-            border: 1.5px solid #e8f5d0;
-            border-radius: 1rem;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .prod-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #f5f5f5;
-        }
-
-        .prod-row:last-child {
-            border-bottom: none;
-        }
-
-        .prod-qty {
-            font-size: 0.78rem;
-            font-weight: 800;
-            color: #4a8a06;
-            min-width: 28px;
-        }
-
-        .prod-nombre {
-            flex: 1;
-            font-size: 0.82rem;
-            color: #333;
-        }
-
-        .prod-precio {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #111;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.85rem 1rem;
-            background: #f8fdf0;
-            border: 1.5px solid #e8f5d0;
-            border-radius: 0.85rem;
-            margin-bottom: 1rem;
-        }
-
-        .total-label {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .total-val {
-            font-size: 1.1rem;
-            font-weight: 900;
-            color: #4a8a06;
-        }
-
-        /* Footer fijo */
-        .footer-fixed {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
-            background: white;
-            border-top: 1px solid #f0f0f0;
-            padding: 1rem 1.25rem;
-            z-index: 10;
-        }
-
-        .btn-aceptar {
-            width: 100%;
-            background: linear-gradient(135deg, #a8df11, #7cc10a);
-            color: #1a1a1a;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 800;
-            padding: 0.9rem;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(168, 223, 17, 0.35);
-            transition: opacity 0.2s;
-        }
-
-        .btn-aceptar:hover {
-            opacity: 0.9;
-        }
-    </style>
 </head>
 
 <body>
@@ -338,6 +104,23 @@
                         <p class="info-val">{{ $persona?->per_telefono ?? '—' }}</p>
                     </div>
                 </div>
+
+                <div class="info-row">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <p class="info-label">Método de pago</p>
+                        <p class="info-val"
+                            style="color:{{ strtolower($pedido->pago?->pag_metodo_pago) === 'tarjeta' ? '#1d4ed8' : '#4a8a06' }}">
+                            {{ strtolower($pedido->pago?->pag_metodo_pago) === 'tarjeta' ? 'Pago con tarjeta' : 'Pago en efectivo' }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {{-- PRODUCTOS --}}
@@ -352,9 +135,30 @@
                 @endforeach
             </div>
 
-            <div class="total-row">
-                <span class="total-label">Total a cobrar</span>
-                <span class="total-val">${{ number_format($pedido->ped_total, 2) }}</span>
+            <div class="total-row" style="flex-direction:column;gap:0.4rem;">
+                <div style="display:flex;justify-content:space-between;width:100%;">
+                    <span class="total-label">Subtotal productos</span>
+                    <span style="font-size:0.88rem;font-weight:700;color:#555;">
+                        ${{ number_format($pedido->detalles->sum('det_subtotal'), 2) }}
+                    </span>
+                </div>
+                @if ($pedido->ped_costo_envio > 0)
+                    <div style="display:flex;justify-content:space-between;width:100%;">
+                        <span class="total-label">Costo de envío</span>
+                        <span style="font-size:0.88rem;font-weight:700;color:#1d4ed8;">
+                            ${{ number_format($pedido->ped_costo_envio, 2) }}
+                        </span>
+                    </div>
+                @endif
+                <div
+                    style="display:flex;justify-content:space-between;width:100%;border-top:1px solid #e8f5d0;padding-top:0.4rem;margin-top:0.1rem;">
+                    <span class="total-label" style="font-weight:800;color:#111;">
+                        {{ strtolower($pedido->pago?->pag_metodo_pago) === 'tarjeta' ? 'Pago con tarjeta' : 'Total a cobrar en efectivo' }}
+                    </span>
+                    <span class="total-val">
+                        ${{ number_format($pedido->ped_total, 2) }}
+                    </span>
+                </div>
             </div>
 
         </div>
@@ -410,31 +214,60 @@
 
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-            const lat = {{ floatval($pedido->tienda->tie_latitud) ?: 17.9869 }};
-            const lng = {{ floatval($pedido->tienda->tie_longitud) ?: -92.9303 }};
+            const latTienda = {{ floatval($pedido->tienda->tie_latitud) ?: 17.9869 }};
+            const lngTienda = {{ floatval($pedido->tienda->tie_longitud) ?: -92.9303 }};
+            const latCliente = {{ floatval($direccion?->drc_latitud) ?: 0 }};
+            const lngCliente = {{ floatval($direccion?->drc_longitud) ?: 0 }};
 
             const mapa = L.map('mapa', {
                     attributionControl: false
                 })
-                .setView([lat, lng], 16);
+                .setView([latTienda, lngTienda], 14);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(mapa);
 
-            const pinSvg = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none">' +
+            // Pin verde — tienda
+            const pinTienda = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none">' +
                 '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#a8df11" stroke="white" stroke-width="1.5"/>' +
                 '<circle cx="12" cy="9" r="2.5" fill="white"/>' +
                 '</svg>';
 
-            L.marker([lat, lng], {
+            L.marker([latTienda, lngTienda], {
                 icon: L.divIcon({
                     className: '',
-                    html: pinSvg,
+                    html: pinTienda,
                     iconSize: [32, 32],
                     iconAnchor: [16, 32]
                 })
-            }).addTo(mapa);
+            }).addTo(mapa).bindPopup('{{ $pedido->tienda->tie_nombre }}');
+
+            // Pin azul — cliente (solo si tiene coordenadas)
+            if (latCliente && lngCliente) {
+                const pinCliente = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none">' +
+                    '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#3b82f6" stroke="white" stroke-width="1.5"/>' +
+                    '<circle cx="12" cy="9" r="2.5" fill="white"/>' +
+                    '</svg>';
+
+                L.marker([latCliente, lngCliente], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: pinCliente,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    })
+                }).addTo(mapa).bindPopup('Cliente');
+
+                // Ajustar el mapa para mostrar ambos pines
+                const bounds = L.latLngBounds(
+                    [latTienda, lngTienda],
+                    [latCliente, lngCliente]
+                );
+                mapa.fitBounds(bounds, {
+                    padding: [40, 40]
+                });
+            }
 
             // Abrir modal
             document.getElementById('modal-aceptar').addEventListener('click', function(e) {

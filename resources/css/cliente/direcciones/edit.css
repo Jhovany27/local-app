@@ -1,0 +1,288 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    background: #f0f2f0;
+    display: flex;
+    justify-content: center;
+    font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+}
+.app {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+}
+.btn-back {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+}
+.btn-back svg {
+    width: 22px;
+    height: 22px;
+}
+.header-logo img {
+    height: 36px;
+}
+
+.mapa-wrap {
+    position: relative;
+}
+#mapa {
+    width: 100%;
+    height: 260px;
+    z-index: 1;
+}
+
+.mapa-pin-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100%);
+    z-index: 999;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+}
+.mapa-pin-center svg {
+    width: 36px;
+    height: 36px;
+}
+
+.btn-mi-ubicacion {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 999;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-mi-ubicacion:hover {
+    background: #f0fde0;
+}
+.btn-mi-ubicacion svg {
+    width: 20px;
+    height: 20px;
+    color: #4a8a06;
+}
+
+.mapa-search {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    z-index: 999;
+    display: flex;
+    gap: 0.5rem;
+}
+.mapa-search input {
+    flex: 1;
+    background: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.65rem 1rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: #111;
+    outline: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+.mapa-search input::placeholder {
+    color: #bbb;
+}
+.mapa-search-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.75rem;
+    background: #a8df11;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(168, 223, 17, 0.35);
+    flex-shrink: 0;
+}
+.mapa-search-btn svg {
+    width: 18px;
+    height: 18px;
+    color: white;
+}
+
+.direccion-detectada {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 1.25rem;
+    background: #f8fdf0;
+    border-bottom: 1.5px solid #e8f5d0;
+}
+.direccion-detectada svg {
+    width: 16px;
+    height: 16px;
+    color: #a8df11;
+    flex-shrink: 0;
+}
+.direccion-detectada p {
+    font-size: 0.78rem;
+    color: #555;
+    line-height: 1.4;
+}
+.direccion-detectada p strong {
+    color: #111;
+    font-weight: 700;
+}
+
+.form-body {
+    padding: 1.25rem 1.25rem 2rem;
+    flex: 1;
+}
+.form-titulo {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 1.1rem;
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+.field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.4rem;
+}
+.field input,
+.field textarea {
+    width: 100%;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.85rem;
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: #111;
+    background: white;
+    outline: none;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+    resize: none;
+}
+.field input:focus,
+.field textarea:focus {
+    border-color: #a8df11;
+    box-shadow: 0 0 0 4px rgba(168, 223, 17, 0.12);
+}
+.field textarea {
+    height: 80px;
+}
+.field-error {
+    font-size: 0.72rem;
+    color: #d41b11;
+    font-weight: 600;
+    margin-top: 0.3rem;
+}
+.field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.coords-info {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.coord-tag {
+    flex: 1;
+    background: #f0fde0;
+    border: 1px solid #d4f0a0;
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.72rem;
+    color: #4a8a06;
+    font-weight: 600;
+    text-align: center;
+}
+.coord-tag span {
+    display: block;
+    font-size: 0.65rem;
+    color: #aaa;
+    font-weight: 500;
+    margin-bottom: 0.1rem;
+}
+
+.check-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #f8fdf0;
+    border: 1.5px solid #e8f5d0;
+    border-radius: 0.85rem;
+    margin: 1rem 0 1.25rem;
+}
+.check-wrap input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #a8df11;
+    cursor: pointer;
+}
+.check-wrap label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+}
+
+.btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, #a8df11, #7cc10a);
+    color: #1a1a1a;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 0.9rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(168, 223, 17, 0.35);
+    transition:
+        opacity 0.2s,
+        transform 0.15s;
+}
+.btn-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}

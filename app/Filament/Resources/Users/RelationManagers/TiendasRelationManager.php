@@ -85,8 +85,12 @@ class TiendasRelationManager extends RelationManager
             ])
 
             ->recordActions([
-                // Editar tienda
-                \Filament\Actions\EditAction::make(),
+                // Editar tienda — forceFill para campos fuera del fillable (tie_estado)
+                \Filament\Actions\EditAction::make()
+                    ->using(function ($record, array $data) {
+                        $record->forceFill($data)->save();
+                        return $record;
+                    }),
 
                 // Activar
                 Action::make('activar')
@@ -96,7 +100,8 @@ class TiendasRelationManager extends RelationManager
                     ->visible(fn($record) => (int)$record->tie_estado !== Tienda::ESTADO_APROBADA)
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        $record->update(['tie_estado' => Tienda::ESTADO_APROBADA]);
+                        $record->tie_estado = Tienda::ESTADO_APROBADA;
+                        $record->save();
                         $user = $record->user;
                         if ($user && !$user->hasRol('tienda')) {
                             $user->roles()->attach(4);
@@ -113,7 +118,8 @@ class TiendasRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->modalDescription('Si no tiene otras tiendas activas, se quitará el rol de tienda.')
                     ->action(function ($record) {
-                        $record->update(['tie_estado' => Tienda::ESTADO_RECHAZADA]);
+                        $record->tie_estado = Tienda::ESTADO_RECHAZADA;
+                        $record->save();
 
                         $user = $record->user;
                         if ($user) {

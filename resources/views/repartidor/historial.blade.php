@@ -5,255 +5,7 @@
     <meta charset="UTF-8">
     <title>Historial de entregas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @vite('resources/css/app.css')
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #f0f2f0;
-            display: flex;
-            justify-content: center;
-            font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-            min-height: 100vh;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 430px;
-            min-height: 100vh;
-            background: white;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.25rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .btn-back {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .btn-back svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .header-logo img {
-            height: 36px;
-        }
-
-        /* Stats hero */
-        .stats-hero {
-            background: linear-gradient(135deg, #a8df11, #7cc10a);
-            padding: 1.5rem 1.25rem 2.5rem;
-            position: relative;
-        }
-
-        .stats-hero::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 24px;
-            background: white;
-            border-radius: 24px 24px 0 0;
-        }
-
-        .stats-title {
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.75);
-            margin-bottom: 1rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 0.85rem;
-            padding: 0.85rem;
-        }
-
-        .stat-val {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: white;
-        }
-
-        .stat-label {
-            font-size: 0.68rem;
-            color: rgba(255, 255, 255, 0.75);
-            margin-top: 0.1rem;
-        }
-
-        .body {
-            flex: 1;
-            padding: 1.25rem 1.25rem 7rem;
-        }
-
-        .seccion-titulo {
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #7ab80e;
-            margin-bottom: 0.75rem;
-        }
-
-        /* Entrega card */
-        .entrega-card {
-            border: 1.5px solid #e8f5d0;
-            border-radius: 1rem;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
-        }
-
-        .entrega-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 1rem;
-            background: #f8fdf0;
-        }
-
-        .entrega-tienda {
-            font-size: 0.88rem;
-            font-weight: 800;
-            color: #111;
-        }
-
-        .entrega-fecha {
-            font-size: 0.68rem;
-            color: #aaa;
-            margin-top: 0.1rem;
-        }
-
-        .entrega-total {
-            font-size: 1rem;
-            font-weight: 900;
-            color: #4a8a06;
-        }
-
-        .entrega-body {
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .entrega-cliente {
-            font-size: 0.78rem;
-            color: #555;
-        }
-
-        .entrega-cliente span {
-            font-weight: 700;
-            color: #111;
-        }
-
-        .entrega-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: #f0fde0;
-            border: 1px solid #c6f135;
-            color: #4a8a06;
-            font-size: 0.62rem;
-            font-weight: 700;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-        }
-
-        /* Empty */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .empty-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 1.25rem;
-            background: #f0fde0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .empty-icon svg {
-            width: 32px;
-            height: 32px;
-            color: #a8df11;
-        }
-
-        .empty-state p {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #555;
-        }
-
-        .empty-state span {
-            font-size: 0.75rem;
-            color: #aaa;
-        }
-
-        /* Nav */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
-            background: white;
-            border-top: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-around;
-            padding: 0.85rem 0;
-            z-index: 10;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: #bbb;
-        }
-
-        .nav-item.active {
-            color: #a8df11;
-        }
-
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-        }
-    </style>
+    @vite('resources/css/repartidor/historial.css')
 </head>
 
 <body>
@@ -266,9 +18,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                 </svg>
             </a>
-            <div class="header-logo">
-                <img src="{{ asset('images/Logo_local_app.png') }}" alt="LocalApp">
-            </div>
+            <div class="header-logo"><img src="{{ asset('images/Logo_local_app.png') }}" alt="LocalApp"></div>
             <div style="width:22px"></div>
         </div>
 
@@ -299,28 +49,20 @@
 
         <div class="body">
 
-            <p class="seccion-titulo">Historial ({{ $asignaciones->count() }})</p>
+            {{-- FILTROS --}}
+            <div class="filtros">
+                <button class="filtro-btn active" onclick="filtrar('todo', this)">Todo</button>
+                <button class="filtro-btn" onclick="filtrar('hoy', this)">Hoy</button>
+                <button class="filtro-btn" onclick="filtrar('semana', this)">Esta semana</button>
+                <button class="filtro-btn" onclick="filtrar('mes', this)">Este mes</button>
+            </div>
 
-            @forelse($asignaciones as $asignacion)
-                @php $pedido = $asignacion->pedido; @endphp
-                <div class="entrega-card">
-                    <div class="entrega-header">
-                        <div>
-                            <p class="entrega-tienda">{{ $pedido?->tienda?->tie_nombre ?? '—' }}</p>
-                            <p class="entrega-fecha">{{ $asignacion->asr_fecha?->format('d/m/Y H:i') }}</p>
-                        </div>
-                        <p class="entrega-total">${{ number_format($pedido?->ped_total ?? 0, 2) }}</p>
-                    </div>
-                    <div class="entrega-body">
-                        @php $persona = $pedido?->cliente?->user?->persona; @endphp
-                        <p class="entrega-cliente">
-                            Cliente: <span>{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</span>
-                        </p>
-                        <span class="entrega-badge">✓ Entregado</span>
-                    </div>
-                </div>
+            {{-- GRUPOS POR FECHA --}}
+            @php
+                $agrupadas = $asignaciones->groupBy(fn($a) => $a->asr_fecha?->format('d/m/Y') ?? '—');
+            @endphp
 
-            @empty
+            @if ($asignaciones->isEmpty())
                 <div class="empty-state">
                     <div class="empty-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -332,7 +74,46 @@
                     <p>Sin entregas aún</p>
                     <span>Tus entregas completadas aparecerán aquí</span>
                 </div>
-            @endforelse
+            @else
+                @foreach ($agrupadas as $fecha => $grupo)
+                    <div class="fecha-grupo" data-fecha="{{ $grupo->first()?->asr_fecha?->toDateString() }}">
+                        <p class="fecha-grupo-label">
+                            @php
+                                $carbon = $grupo->first()?->asr_fecha;
+                                if ($carbon?->isToday()) {
+                                    echo 'Hoy';
+                                } elseif ($carbon?->isYesterday()) {
+                                    echo 'Ayer';
+                                } else {
+                                    echo $carbon?->translatedFormat('l d \d\e F') ?? $fecha;
+                                }
+                            @endphp
+                            — {{ $grupo->count() }} entrega(s)
+                        </p>
+
+                        @foreach ($grupo as $asignacion)
+                            @php $pedido = $asignacion->pedido; @endphp
+                            <div class="entrega-card" data-fecha-iso="{{ $asignacion->asr_fecha?->toDateString() }}"
+                                onclick="abrirDetalle('modal-{{ $asignacion->asr_id }}')">
+                                <div class="entrega-header">
+                                    <div>
+                                        <p class="entrega-tienda">{{ $pedido?->tienda?->tie_nombre ?? '—' }}</p>
+                                        <p class="entrega-fecha">{{ $asignacion->asr_fecha?->format('H:i') }}</p>
+                                    </div>
+                                    <p class="entrega-total">${{ number_format($pedido?->ped_total ?? 0, 2) }}</p>
+                                </div>
+                                <div class="entrega-body">
+                                    @php $persona = $pedido?->cliente?->user?->persona; @endphp
+                                    <p class="entrega-cliente">
+                                        Cliente: <span>{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</span>
+                                    </p>
+                                    <span class="entrega-badge">Entregado</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
+            @endif
 
         </div>
 
@@ -361,6 +142,153 @@
         </nav>
 
     </div>
+
+    {{-- MODALES DETALLE --}}
+    @foreach ($asignaciones as $asignacion)
+        @php
+            $pedido = $asignacion->pedido;
+            $persona = $pedido?->cliente?->user?->persona;
+        @endphp
+        <div class="modal-detalle" id="modal-{{ $asignacion->asr_id }}">
+            <div class="modal-inner">
+
+                <div class="modal-header">
+                    <p class="modal-title">#{{ $pedido?->ped_codigo ?? 'Entrega' }}</p>
+                    <button class="modal-close" onclick="cerrarDetalle('modal-{{ $asignacion->asr_id }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- INFO ENTREGA --}}
+                <div class="modal-section">
+                    <p class="modal-section-label">Información de la entrega</p>
+                    <div class="modal-info-row">
+                        <span class="modal-info-key">Tienda</span>
+                        <span class="modal-info-val">{{ $pedido?->tienda?->tie_nombre ?? '—' }}</span>
+                    </div>
+                    <div class="modal-info-row">
+                        <span class="modal-info-key">Cliente</span>
+                        <span class="modal-info-val">{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</span>
+                    </div>
+                    <div class="modal-info-row">
+                        <span class="modal-info-key">Teléfono cliente</span>
+                        <span class="modal-info-val">{{ $persona?->per_telefono ?? '—' }}</span>
+                    </div>
+                    <div class="modal-info-row">
+                        <span class="modal-info-key">Fecha de entrega</span>
+                        <span class="modal-info-val">{{ $asignacion->asr_fecha?->format('d/m/Y H:i') }}</span>
+                    </div>
+                    <div class="modal-info-row">
+                        <span class="modal-info-key">Método de pago</span>
+                        <span class="modal-info-val"
+                            style="color:{{ strtolower($pedido?->pago?->pag_metodo_pago) === 'tarjeta' ? '#1d4ed8' : '#4a8a06' }}">
+                            {{ strtolower($pedido?->pago?->pag_metodo_pago) === 'tarjeta' ? 'Tarjeta' : 'Efectivo' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- PRODUCTOS --}}
+                <div class="modal-section" style="margin-top:1rem;">
+                    <p class="modal-section-label">Productos entregados</p>
+                    @foreach ($pedido?->detalles ?? [] as $det)
+                        <div class="prod-row">
+                            @if ($det->producto?->foto_principal)
+                                <img src="{{ asset('storage/' . $det->producto->foto_principal) }}" class="prod-img">
+                            @else
+                                <div class="prod-img" style="background:#f0fde0;border-radius:0.5rem;"></div>
+                            @endif
+                            <div style="flex:1;">
+                                <p class="prod-nombre">{{ $det->producto?->pro_nombre }}</p>
+                                <p class="prod-info">×{{ $det->det_cantidad }} —
+                                    ${{ number_format($det->det_precio_unitario, 2) }} c/u</p>
+                            </div>
+                            <span class="prod-precio">${{ number_format($det->det_subtotal, 2) }}</span>
+                        </div>
+                    @endforeach
+
+                    {{-- Totales --}}
+                    <div
+                        style="margin-top:0.75rem;background:#f8fdf0;border:1px solid #e8f5d0;border-radius:0.75rem;padding:0.75rem;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
+                            <span style="font-size:0.78rem;color:#888;">Subtotal productos</span>
+                            <span
+                                style="font-size:0.78rem;font-weight:700;color:#111;">${{ number_format($pedido?->detalles?->sum('det_subtotal') ?? 0, 2) }}</span>
+                        </div>
+                        @if (($pedido?->ped_costo_envio ?? 0) > 0)
+                            <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
+                                <span style="font-size:0.78rem;color:#888;">Costo de envío</span>
+                                <span
+                                    style="font-size:0.78rem;font-weight:700;color:#1d4ed8;">${{ number_format($pedido->ped_costo_envio, 2) }}</span>
+                            </div>
+                        @endif
+                        <div
+                            style="display:flex;justify-content:space-between;border-top:1px solid #e8f5d0;padding-top:0.35rem;">
+                            <span style="font-size:0.85rem;font-weight:800;color:#111;">Total</span>
+                            <span
+                                style="font-size:1rem;font-weight:900;color:#4a8a06;">${{ number_format($pedido?->ped_total ?? 0, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    @endforeach
+
+    <script>
+        function abrirDetalle(id) {
+            document.getElementById(id).classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function cerrarDetalle(id) {
+            document.getElementById(id).classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.modal-detalle').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('open');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // ── FILTROS ───────────────────────────────────────────
+        function filtrar(periodo, btn) {
+            // Actualizar botón activo
+            document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            const inicioSemana = new Date(hoy);
+            inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+
+            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+            document.querySelectorAll('.fecha-grupo').forEach(grupo => {
+                const fechaStr = grupo.dataset.fecha;
+                if (!fechaStr || periodo === 'todo') {
+                    grupo.style.display = 'block';
+                    return;
+                }
+
+                const fecha = new Date(fechaStr + 'T00:00:00');
+
+                let mostrar = false;
+                if (periodo === 'hoy') mostrar = fecha >= hoy;
+                if (periodo === 'semana') mostrar = fecha >= inicioSemana;
+                if (periodo === 'mes') mostrar = fecha >= inicioMes;
+
+                grupo.style.display = mostrar ? 'block' : 'none';
+            });
+        }
+    </script>
 </body>
 
 </html>

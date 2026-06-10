@@ -11,6 +11,8 @@ use App\Http\Controllers\RegistroTiendaController;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return redirect()->route('portal');
@@ -29,11 +31,12 @@ Route::post('/registro-tienda', [RegistroTiendaController::class, 'store'])
     ->name('registro.tienda.store');
 
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/registro-tienda/pendiente', [RegistroTiendaController::class, 'pendiente'])
         ->name('registro.tienda.pendiente');
 
-    // ...las demás rutas auth que ya tienes
+    Route::get('/tienda/{tienda}/estado', [RegistroTiendaController::class, 'verEstado'])
+        ->name('tienda.estado');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -68,9 +71,6 @@ Route::get('/cliente/registro', [\App\Http\Controllers\ClienteAuthController::cl
 Route::post('/cliente/registro', [\App\Http\Controllers\ClienteAuthController::class, 'registro'])
     ->name('cliente.registro.store');
 
-Route::get('/cliente/direcciones', [\App\Http\Controllers\ClienteController::class, 'direcciones'])
-    ->name('cliente.direcciones');
-
 Route::get('/cliente/pedido', [\App\Http\Controllers\ClienteController::class, 'pedido'])
     ->name('cliente.pedido');
 
@@ -84,7 +84,7 @@ Route::get('/cliente/tienda/{id}', [ClienteController::class, 'show'])
 Route::get('/cliente/producto/{id}', [ClienteController::class, 'showProducto'])
     ->name('cliente.producto');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cliente/perfil', [\App\Http\Controllers\ClienteAuthController::class, 'perfil'])
         ->name('cliente.perfil');
 });
@@ -95,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Reemplaza las rutas de direcciones en web.php
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cliente/direcciones',                  [\App\Http\Controllers\DireccionController::class, 'index'])
         ->name('cliente.direcciones');
 
@@ -146,8 +146,26 @@ Route::post('/carrito/confirmar/{pedidoId}', [\App\Http\Controllers\CarritoContr
     ->name('carrito.confirmar');
 
 Route::get('/cliente/pedidos', [\App\Http\Controllers\CarritoController::class, 'misPedidos'])
+    ->middleware('auth')
     ->name('cliente.pedidos');
 
+// FAVORITOS
+Route::middleware(['auth'])->group(function () {
+    Route::post('/cliente/favorito/producto/agregar', [ClienteController::class, 'agregarFavoritoProducto'])
+        ->name('cliente.favorito.producto.agregar');
+
+    Route::post('/cliente/favorito/producto/quitar', [ClienteController::class, 'quitarFavoritoProducto'])
+        ->name('cliente.favorito.producto.quitar');
+
+    Route::post('/cliente/favorito/tienda/agregar', [ClienteController::class, 'agregarFavoritoTienda'])
+        ->name('cliente.favorito.tienda.agregar');
+
+    Route::post('/cliente/favorito/tienda/quitar', [ClienteController::class, 'quitarFavoritoTienda'])
+        ->name('cliente.favorito.tienda.quitar');
+
+    Route::get('/cliente/favoritos', [ClienteController::class, 'favoritos'])
+        ->name('cliente.favoritos');
+});
 
 Route::get('/store', function () {
     /** @var \App\Models\User $user */
@@ -172,14 +190,14 @@ Route::get('/store', function () {
 
     if ($tiendas->count() === 1) {
         session(['store_tienda_id' => $tiendas->first()->tie_id]);
-        return redirect()->route('filament.store.pages.mi-tienda');
+        return redirect()->route('filament.store.pages.dashboard');
     }
 
     if (!session()->has('store_tienda_id')) {
         return redirect()->route('filament.store.pages.seleccionar-tienda');
     }
 
-    return redirect()->route('filament.store.pages.mi-tienda');
+    return redirect()->route('filament.store.pages.dashboard');
 })->name('store.home')->middleware('auth');
 
 // Reemplaza todas las rutas del repartidor en web.php
@@ -203,7 +221,8 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
         $user = Auth::user();
         $persona = $user->persona;
         $repartidor = $user->repartidors()->firstOrFail();
-        return view('repartidor.perfil', compact('user', 'persona', 'repartidor'));
+        $fotoPerfil = $repartidor->documentos()->where('dor_fk_tipo_documento', 4)->first();
+        return view('repartidor.perfil', compact('user', 'persona', 'repartidor', 'fotoPerfil'));
     })->name('repartidor.perfil');
     Route::get('/historial', [\App\Http\Controllers\RepartidorController::class, 'historial'])->name('repartidor.historial');
 
@@ -217,3 +236,57 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
     Route::get('/pedido/{pedidoId}/entregar', [\App\Http\Controllers\RepartidorController::class, 'entregar'])->name('repartidor.entregar');
     Route::post('/pedido/{pedidoId}/entregue', [\App\Http\Controllers\RepartidorController::class, 'entreguePedido'])->name('repartidor.entregue-pedido');
 });
+
+
+// ── STRIPE ────────────────────────────────────────────
+Route::middleware(['auth'])->group(function () {
+    Route::post('/stripe/intent',    [\App\Http\Controllers\StripeController::class, 'crearIntent'])
+        ->name('stripe.intent');
+    Route::post('/stripe/confirmar', [\App\Http\Controllers\StripeController::class, 'confirmar'])
+        ->name('stripe.confirmar');
+});
+
+// Webhook — sin auth ni CSRF (ya está excluido en bootstrap/app.php)
+Route::post('/stripe/webhook', [\App\Http\Controllers\StripeController::class, 'webhook'])
+    ->name('stripe.webhook');
+
+// Páginas "verifica tu correo" por rol
+Route::get('/email/verify', fn() => view('auth.verify-email'))
+    ->middleware('auth')->name('verification.notice'); // cliente
+
+Route::get('/tienda/email/verify', fn() => view('tienda.auth.verify-email'))
+    ->middleware('auth')->name('tienda.verification.notice');
+
+Route::get('/repartidor/email/verify', fn() => view('repartidor.auth.verify-email'))
+    ->middleware('auth')->name('repartidor.verification.notice');
+
+// Link del correo — redirige según rol del usuario
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    /** @var \App\Models\User $user */
+    $user = $request->user();
+
+    if ($user->hasRol('cliente')) {
+        return redirect()->route('cliente.index');
+    }
+
+    if ($user->hasRol('repartidor')) {
+        $rep = $user->repartidors()->first();
+        return ($rep && (int)$rep->rep_estado === 1)
+            ? redirect()->route('repartidor.index')
+            : redirect()->route('repartidor.pendiente');
+    }
+
+    // Flujo tienda (sin rol aún hasta aprobación del admin)
+    return $user->tiendas()->exists()
+        ? redirect()->route('registro.tienda.pendiente')
+        : redirect()->route('registro.tienda');
+
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+// Reenviar correo (compartido por todos los roles)
+Route::post('/email/resend', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Correo de verificación reenviado.');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');

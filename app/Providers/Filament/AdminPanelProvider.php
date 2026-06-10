@@ -17,7 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Widgets\TiendasPendientesWidget;
+use App\Filament\Pages\ConfiguracionEnvioPage;
 use App\Filament\Pages\RevisionTienda;
 
 
@@ -37,7 +37,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
-                RevisionTienda::class, // la página de revisión de tiendas
+                RevisionTienda::class,
+                ConfiguracionEnvioPage::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
@@ -45,7 +46,9 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\PendientesWidget::class,
             ])
             ->navigationGroups([
-                'Gestión',  //  define el orden de los grupos
+                'Gestión',
+                'Finanzas',
+                'Tablas',
             ])
             ->middleware([
                 EncryptCookies::class,

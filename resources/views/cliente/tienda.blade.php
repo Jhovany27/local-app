@@ -10,7 +10,6 @@
 
 <body>
     <div class="app">
-
         {{-- HEADER --}}
         <div class="header">
             <div>
@@ -31,7 +30,20 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                 </svg>
-                @php $total = collect(session('carrito', []))->sum('cantidad'); @endphp
+                @php
+                    if (Auth::check() && Auth::user()->hasRol('cliente')) {
+                        $cliente = Auth::user()->cliente;
+                        $total = $cliente
+                            ? \App\Models\Pedido::where('ped_fk_cliente', $cliente->cli_id)
+                                ->where('ped_estado', 'carrito')
+                                ->withCount('detalles')
+                                ->get()
+                                ->sum('detalles_count')
+                            : 0;
+                    } else {
+                        $total = collect(session('carrito', []))->sum('cantidad');
+                    }
+                @endphp
                 @if ($total > 0)
                     <span class="cart-badge">{{ $total }}</span>
                 @endif
@@ -86,62 +98,139 @@
         </div>
 
         {{-- CATEGORÍAS --}}
-        <div class="categorias-wrap">
-            <div class="categorias-header">
-                <h2>Categorías</h2>
-                <span>Ver todas</span>
+        @if ($categorias->count() > 0)
+            <div class="categorias-wrap">
+                <div class="categorias-header">
+                    <h2>Filtrar por categoría</h2>
+                    <button class="btn-ver-todas" onclick="abrirModalCategorias()">
+                        Ver todas
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="categorias-scroll">
+                    {{-- "Ver todas" (sin filtro) --}}
+                    <a href="{{ route('cliente.tienda', $tienda->tie_id) }}" class="cat-chip {{ empty($categoriasSeleccionadas) ? 'active' : '' }}">
+                        Todas
+                    </a>
+
+                    {{-- Primeras 5 categorías dinámicas (las más importantes) --}}
+                    @foreach ($categorias->take(5) as $cat)
+                        @php
+                            $isSelected = in_array($cat->cat_id, $categoriasSeleccionadas);
+                            if ($isSelected) {
+                                $nuevas = array_diff($categoriasSeleccionadas, [$cat->cat_id]);
+                            } else {
+                                $nuevas = array_merge($categoriasSeleccionadas, [$cat->cat_id]);
+                            }
+                            $url = !empty($nuevas)
+                                ? route('cliente.tienda', $tienda->tie_id) . '?categorias=' . implode(',', $nuevas)
+                                : route('cliente.tienda', $tienda->tie_id);
+                        @endphp
+                        <a href="{{ $url }}" class="cat-chip {{ $isSelected ? 'active' : '' }}">
+                            {{ $cat->cat_nombre }}
+                        </a>
+                    @endforeach
+                </div>
             </div>
-            <div class="categorias-scroll">
-                <div class="cat-chip active">Todas</div>
-                <div class="cat-chip">Alcohol</div>
-                <div class="cat-chip">Frutas</div>
-                <div class="cat-chip">Verduras</div>
-                <div class="cat-chip">Frituras</div>
-                <div class="cat-chip">Lácteos</div>
-                <div class="cat-chip">Bebidas</div>
+
+            {{-- MODAL DE CATEGORÍAS --}}
+            <div id="modalCategorias" class="modal-categorias hidden">
+                <div class="modal-categorias-overlay" onclick="cerrarModalCategorias()"></div>
+                <div class="modal-categorias-content">
+                    <div class="modal-categorias-header">
+                        <h3>Selecciona categorías</h3>
+                        <button class="modal-categorias-close" onclick="cerrarModalCategorias()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:24px;height:24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="modal-categorias-list">
+                        @foreach ($categorias as $cat)
+                            @php
+                                $isSelected = in_array($cat->cat_id, $categoriasSeleccionadas);
+                            @endphp
+                            <label class="categoria-checkbox">
+                                <input type="checkbox" name="categorias[]" value="{{ $cat->cat_id }}"
+                                    {{ $isSelected ? 'checked' : '' }}
+                                    onchange="actualizarCheckboxes()">
+                                <span class="checkbox-visual"></span>
+                                <span class="categoria-nombre">{{ $cat->cat_nombre }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div class="modal-categorias-footer">
+                        <button class="btn-limpiar" onclick="limpiarFiltros()">Limpiar</button>
+                        <button class="btn-aplicar" onclick="aplicarFiltros()">Aplicar</button>
+                    </div>
+                </div>
             </div>
-        </div>
+        @endif
 
         {{-- FILTROS --}}
         <div class="filtros-wrap">
-            <button class="filtro-btn active">Todos</button>
-            <button class="filtro-btn">♥ Favoritos</button>
+            <button class="filtro-btn active" data-filtro="todos">Todos</button>
+            <button class="filtro-btn" data-filtro="favoritos">♥ Favoritos</button>
         </div>
 
         {{-- PRODUCTOS --}}
         <div class="productos-grid">
-            @foreach ($productos as $producto)
-                <a href="{{ route('cliente.producto', $producto->pro_id) }}" class="producto-item">
+            @if ($productos->count() > 0)
+                @foreach ($productos as $producto)
+                    <div class="producto-wrapper" data-producto-id="{{ $producto->pro_id }}" data-favorito="{{ auth()->check() && auth()->user()->hasRol('cliente') && auth()->user()->cliente && auth()->user()->cliente->favoritosProductos()->where('fav_fk_producto', $producto->pro_id)->exists() ? 'true' : 'false' }}">
+                        <a href="{{ route('cliente.producto', $producto->pro_id) }}" class="producto-item">
 
-                    <span class="favorito-btn">♥</span>
+                            @if ($producto->foto_principal)
+                                <img src="{{ asset('storage/' . $producto->foto_principal) }}"
+                                    alt="{{ $producto->pro_nombre }}" class="producto-img">
+                            @else
+                                <div class="producto-img-empty">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+                                    </svg>
+                                </div>
+                            @endif
 
-                    @if ($producto->foto_principal)
-                        <img src="{{ asset('storage/' . $producto->foto_principal) }}" alt="{{ $producto->pro_nombre }}"
-                            class="producto-img">
-                    @else
-                        <div class="producto-img-empty">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+                            <p class="nombre">{{ $producto->pro_nombre }}</p>
+                            <p class="marca">{{ $producto->pro_marca }}</p>
+
+                            <div class="producto-footer">
+                                <span class="precio">${{ number_format($producto->pro_precio_venta, 2) }}</span>
+                                @php $sinStock = !$producto->inventario || $producto->inventario->inv_stock_actual <= 0; @endphp
+                                @if($sinStock)
+                                    <button type="button" class="btn-add btn-add--agotado" disabled
+                                        onclick="event.stopPropagation()" title="Sin stock">
+                                        —
+                                    </button>
+                                @else
+                                    <form action="{{ route('carrito.agregar', $producto->pro_id) }}" method="POST"
+                                        onclick="event.stopPropagation()">
+                                        @csrf
+                                        <button type="submit" class="btn-add">+</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                        </a>
+
+                        <button class="favorito-btn" onclick="toggleFavoritoProducto(event, {{ $producto->pro_id }})">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.312-2.733C5.099 3.75 3 5.765 3 8.25c0 7.22 9 13 9 13s9-5.78 9-13Z" />
                             </svg>
-                        </div>
-                    @endif
-
-                    <p class="nombre">{{ $producto->pro_nombre }}</p>
-                    <p class="marca">{{ $producto->pro_marca }}</p>
-
-                    <div class="producto-footer">
-                        <span class="precio">${{ number_format($producto->pro_precio_venta, 2) }}</span>
-                        <form action="{{ route('carrito.agregar', $producto->pro_id) }}" method="POST"
-                            onclick="event.stopPropagation()">
-                            @csrf
-                            <button type="submit" class="btn-add">+</button>
-                        </form>
+                        </button>
                     </div>
-
-                </a>
-            @endforeach
+                @endforeach
+            @else
+                <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #999;">
+                    <p style="font-size: 0.95rem;">No hay productos en {{ !empty($categoriasSeleccionadas) ? 'estas categorías' : 'esta tienda' }}</p>
+                </div>
+            @endif
         </div>
 
         {{-- BOTTOM NAV --}}
@@ -191,7 +280,294 @@
                 item.style.display = nombre.includes(filtro) ? 'block' : 'none';
             });
         });
+
+        // Modal de categorías
+        function abrirModalCategorias() {
+            document.getElementById('modalCategorias').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function cerrarModalCategorias() {
+            document.getElementById('modalCategorias').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function limpiarFiltros() {
+            document.querySelectorAll('.categoria-checkbox input').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+
+        function aplicarFiltros() {
+            const checkboxes = document.querySelectorAll('.categoria-checkbox input:checked');
+            const categorias = Array.from(checkboxes).map(cb => cb.value);
+
+            if (categorias.length === 0) {
+                window.location.href = '{{ route('cliente.tienda', $tienda->tie_id) }}';
+            } else {
+                window.location.href = '{{ route('cliente.tienda', $tienda->tie_id) }}?categorias=' + categorias.join(',');
+            }
+        }
+
+        function actualizarCheckboxes() {
+            // Opcional: para actualizaciones en tiempo real
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('modalCategorias');
+            const content = document.querySelector('.modal-categorias-content');
+            if (modal && event.target === modal && !content.contains(event.target)) {
+                cerrarModalCategorias();
+            }
+        });
+
+        let filtroProductoActual = 'todos';
+
+        // Filtros de productos
+        document.querySelectorAll('.filtros-wrap .filtro-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filtros-wrap .filtro-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                filtroProductoActual = this.dataset.filtro;
+
+                document.querySelectorAll('.producto-wrapper').forEach(wrapper => {
+                    const esVisible = filtroProductoActual === 'todos' ? true : (wrapper.dataset.favorito === 'true');
+                    wrapper.style.display = esVisible ? 'block' : 'none';
+                });
+            });
+        });
+
+        // Toggle favorito producto
+        function toggleFavoritoProducto(event, productoId) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const wrapper = event.target.closest('.producto-wrapper');
+            const esFavorito = wrapper.dataset.favorito === 'true';
+            const url = esFavorito
+                ? '{{ route("cliente.favorito.producto.quitar") }}'
+                : '{{ route("cliente.favorito.producto.agregar") }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ producto_id: productoId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    wrapper.dataset.favorito = esFavorito ? 'false' : 'true';
+                    const icon = wrapper.querySelector('.favorito-btn svg');
+                    icon.classList.toggle('favorito-activo');
+                }
+            });
+        }
     </script>
+
+    <style>
+        .btn-ver-todas {
+            background: none;
+            border: none;
+            color: #a8df11;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .modal-categorias {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-categorias.hidden {
+            display: none;
+        }
+
+        .modal-categorias-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+        }
+
+        .modal-categorias-content {
+            position: relative;
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            animation: fadeInScale 0.3s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-categorias-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-categorias-header h3 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #111;
+            margin: 0;
+        }
+
+        .modal-categorias-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .modal-categorias-close:hover {
+            color: #333;
+        }
+
+        .modal-categorias-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .categoria-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .categoria-checkbox:hover {
+            background: #f5f5f5;
+        }
+
+        .categoria-checkbox input {
+            display: none;
+        }
+
+        .checkbox-visual {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .categoria-checkbox input:checked + .checkbox-visual {
+            background: #a8df11;
+            border-color: #a8df11;
+        }
+
+        .categoria-checkbox input:checked + .checkbox-visual::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .categoria-nombre {
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .modal-categorias-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-limpiar, .btn-aplicar {
+            padding: 0.85rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-limpiar {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-limpiar:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-aplicar {
+            background: linear-gradient(135deg, #a8df11, #7cc10a);
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(168, 223, 17, 0.3);
+        }
+
+        .btn-aplicar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 223, 17, 0.4);
+        }
+
+        @media (max-width: 640px) {
+            .modal-categorias-list {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-categorias-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+    </style>
 </body>
 
 </html>

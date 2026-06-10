@@ -32,8 +32,24 @@ class Cliente extends Model
 		'user_id'
 	];
 
+	protected $hidden = [
+		'user_id',
+	];
+
 	public function user()
 	{
 		return $this->belongsTo(\App\Models\User::class, 'user_id');
+	}
+
+	public function favoritosProductos()
+	{
+		return $this->hasMany(Favorito::class, 'fav_fk_cliente', 'cli_id')
+			->whereNotNull('fav_fk_producto');
+	}
+
+	public function favoritosTiendas()
+	{
+		return $this->hasMany(Favorito::class, 'fav_fk_cliente', 'cli_id')
+			->whereNotNull('fav_fk_tienda');
 	}
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Persona;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 
@@ -45,7 +46,13 @@ class RegistroController extends Controller
             ]);
         });
 
-        return redirect()->route('login')
-            ->with('success', 'Usuario registrado correctamente.');
+        Auth::attempt([
+            'email'    => $data['email'],
+            'password' => $data['password'],
+        ]);
+
+        Auth::user()->sendEmailVerificationNotification();
+
+        return redirect()->route('tienda.verification.notice');
     }
 }

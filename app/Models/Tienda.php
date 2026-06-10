@@ -54,10 +54,8 @@ class Tienda extends Model
         'tie_latitud',
         'tie_longitud',
         'tie_direccion',
-        'tie_estado',
         'tie_fecha_registro',
         'user_id',
-        'tie_motivo_rechazo',
     ];
 
     public function user()
@@ -83,5 +81,10 @@ class Tienda extends Model
     public function ventas()
     {
         return $this->hasMany(Venta::class, 'ven_fk_tienda', 'tie_id');
+    }
+
+    public function favoritos()
+    {
+        return $this->hasMany(Favorito::class, 'fav_fk_tienda', 'tie_id');
     }
 }

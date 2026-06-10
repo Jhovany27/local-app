@@ -27,4 +27,9 @@ class CategoriaProducto extends Model
 		'cat_nombre',
 		'cat_descripcion'
 	];
+
+	public function productos()
+	{
+		return $this->hasMany(Producto::class, 'pro_fk_categoria', 'cat_id');
+	}
 }

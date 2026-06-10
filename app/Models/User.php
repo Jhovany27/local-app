@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * Class User
@@ -30,10 +32,10 @@ use Illuminate\Database\Eloquent\Collection;
  * @property Collection|Rol[] $rols
  * @property Collection|Tienda[] $tiendas
  */
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     protected $table = 'users';
-
+    use Notifiable;
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];

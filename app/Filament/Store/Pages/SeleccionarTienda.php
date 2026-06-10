@@ -48,6 +48,20 @@ class SeleccionarTienda extends Page
         }
     }
 
+    public function verEstado(int $tiendaId): void
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $pertenece = $user->tiendas()
+            ->where('tie_id', $tiendaId)
+            ->exists();
+
+        abort_unless($pertenece, 403, 'Esa tienda no te pertenece.');
+
+        $this->redirect(route('tienda.estado', $tiendaId));
+    }
+
     public function seleccionar(int $tiendaId): void
     {
         /** @var \App\Models\User $user */

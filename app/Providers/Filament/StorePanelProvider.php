@@ -22,6 +22,8 @@ use Filament\Navigation\NavigationItem;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 use Filament\Navigation\MenuItem;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 
 
@@ -33,7 +35,25 @@ class StorePanelProvider extends PanelProvider
             ->id('store')
             ->path('store')
             ->login(\App\Filament\Store\Pages\Auth\Login::class)
-            ->brandName('Panel Tienda')
+            ->darkMode(false)
+            ->brandName(function (): HtmlString {
+                $tiendaId = session('store_tienda_id');
+                $tienda = $tiendaId ? \App\Models\Tienda::find($tiendaId) : null;
+
+                if (!$tienda) {
+                    return new HtmlString('Panel Tienda');
+                }
+
+                $nombre = e($tienda->tie_nombre);
+                $dir    = e(Str::limit($tienda->tie_direccion, 32));
+
+                return new HtmlString(
+                    "<span style='display:flex;flex-direction:column;gap:0;line-height:1.25'>
+                        <span>{$nombre}</span>
+                        <span style='font-size:0.68rem;font-weight:400;opacity:0.55'>{$dir}</span>
+                    </span>"
+                );
+            })
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn(): string => Blade::render("@vite('resources/css/app.css')")
@@ -62,7 +82,8 @@ class StorePanelProvider extends PanelProvider
             ->navigationItems([
                 NavigationItem::make('Cambiar tienda')
                     ->icon('heroicon-o-arrows-right-left')
-                    ->url(fn() => route('store.cambiar-tienda')),
+                    ->url(fn() => route('store.cambiar-tienda'))
+                    ->sort(0),
             ])
             ->userMenuItems([
                 MenuItem::make()

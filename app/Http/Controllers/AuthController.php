@@ -25,6 +25,11 @@ class AuthController extends Controller
             /** @var \App\Models\User $user */
             $user = Auth::user();
 
+            if (!$user->hasVerifiedEmail()) {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+            }
+
             //  Si tiene rol tienda → entrar al panel
             if ($user->hasRol('tienda')) {
                 return redirect('/store');

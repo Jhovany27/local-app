@@ -289,6 +289,10 @@ body {
     padding: 1rem 1.25rem 6rem;
 }
 
+.producto-wrapper {
+    position: relative;
+}
+
 .producto-item {
     background: white;
     border-radius: 1rem;
@@ -313,15 +317,48 @@ body {
     position: absolute;
     top: 0.6rem;
     right: 0.6rem;
-    color: #d4f0a0;
-    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: color 0.15s;
-    z-index: 1;
+    transition: all 0.2s;
+    z-index: 5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .favorito-btn:hover {
-    color: #a8df11;
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.favorito-btn svg {
+    width: 16px;
+    height: 16px;
+    color: #d4af37;
+    stroke-width: 2;
+    stroke: #d4af37;
+    fill: none;
+    transition: all 0.3s;
+}
+
+.favorito-btn:hover svg {
+    color: #ffed4e;
+    stroke: #ffed4e;
+}
+
+.producto-wrapper[data-favorito="true"] .favorito-btn svg {
+    fill: #d4af37;
+    stroke: #d4af37;
+}
+
+.favorito-btn.favorito-activo svg {
+    fill: #d4af37;
+    stroke: #d4af37;
 }
 
 .producto-img {
@@ -401,6 +438,19 @@ body {
 .btn-add:hover {
     transform: scale(1.1);
     opacity: 0.9;
+}
+
+.btn-add--agotado {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.btn-add--agotado:hover {
+    transform: none;
+    opacity: 1;
 }
 
 /* ── BOTTOM NAV ── */

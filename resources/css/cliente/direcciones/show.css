@@ -1,0 +1,268 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #f0f2f0;
+    display: flex;
+    justify-content: center;
+    font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+}
+
+.app {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+}
+
+.btn-back svg {
+    width: 22px;
+    height: 22px;
+}
+
+.header-logo img {
+    height: 36px;
+}
+
+/* Mapa solo lectura */
+#mapa-view {
+    width: 100%;
+    height: 220px;
+    z-index: 1;
+}
+
+/* Body */
+.body {
+    padding: 1.25rem;
+    flex: 1;
+}
+
+.page-title {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #111;
+    margin-bottom: 1.25rem;
+}
+
+/* Badge activa */
+.badge-activa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f0fde0;
+    border: 1.5px solid #c6f135;
+    color: #4a8a06;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.2rem 0.75rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+}
+
+.badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #a8df11;
+}
+
+/* Info card */
+.info-card {
+    background: white;
+    border: 1.5px solid #e8f5d0;
+    border-radius: 1rem;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.6rem;
+    background: #f0fde0;
+    border: 1px solid #d4f0a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-icon svg {
+    width: 15px;
+    height: 15px;
+    color: #4a8a06;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.15rem;
+}
+
+.info-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.4;
+}
+
+.info-value.muted {
+    color: #aaa;
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* Coords */
+.coords-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.coord-box {
+    flex: 1;
+    background: #f8fdf0;
+    border: 1px solid #e8f5d0;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    text-align: center;
+}
+
+.coord-box span:first-child {
+    display: block;
+    font-size: 0.6rem;
+    color: #aaa;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.15rem;
+}
+
+.coord-box span:last-child {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #4a8a06;
+}
+
+/* Botones acción */
+.acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-usar {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #a8df11, #7cc10a);
+    color: #1a1a1a;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 0.85rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(168, 223, 17, 0.35);
+    transition:
+        opacity 0.2s,
+        transform 0.15s;
+}
+
+.btn-usar:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-editar {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: white;
+    color: #111;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.85rem;
+    border-radius: 999px;
+    border: 2px solid #e8f5d0;
+    text-decoration: none;
+    transition:
+        border-color 0.2s,
+        background 0.2s;
+}
+
+.btn-editar:hover {
+    border-color: #a8df11;
+    background: #f8fdf0;
+}
+
+.btn-eliminar {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    color: #d41b11;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.75rem;
+    border-radius: 999px;
+    border: 2px solid #fca5a530;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
+}
+
+.btn-eliminar:hover {
+    background: #fff1f0;
+    border-color: #d41b11;
+}

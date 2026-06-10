@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Portal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @vite('resources/css/app.css')
+    <meta name="viewport" content="width=device-width, initial-scale=    <l    @vite('resources/css/app.css')
 </head>
 
 <body class="bg-[#edf3e3] min-h-screen flex items-center justify-center">
@@ -88,7 +87,6 @@
 
                 <h2 class="font-bold text-gray-800">Tienda</h2>
             </a>
-
         </div>
 
         <!-- FOOTER -->
