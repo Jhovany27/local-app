@@ -19,16 +19,15 @@ class RegistroTiendaController extends Controller
 
         abort_unless($user, 403);
 
-        if ($user->hasRol('tienda')) {
-            return redirect('/store');
-        }
+        // Solo bloquear por tienda pendiente si aún no tiene rol (primer registro)
+        if (! $user->hasRol('tienda')) {
+            $tiendaPendiente = $user->tiendas()
+                ->where('tie_estado', 0)
+                ->exists();
 
-        $tiendaPendiente = $user->tiendas()
-            ->where('tie_estado', 0)
-            ->exists();
-
-        if ($tiendaPendiente) {
-            return redirect()->route('registro.tienda.pendiente');
+            if ($tiendaPendiente) {
+                return redirect()->route('registro.tienda.pendiente');
+            }
         }
 
         $tiposDocumentos = TipoDocumentoTienda::all();
@@ -43,10 +42,6 @@ class RegistroTiendaController extends Controller
 
         abort_unless($user, 403);
 
-        if ($user->hasRol('tienda')) {
-            return redirect('/store');
-        }
-
         $request->validate([
             'tie_nombre' => 'required|string|max:255',
             'tie_descripcion' => 'required|string|max:500',
@@ -55,7 +50,7 @@ class RegistroTiendaController extends Controller
             'tie_latitud' => 'nullable|numeric',
             'tie_longitud' => 'nullable|numeric',
 
-            'fachada' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'fachada' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048|dimensions:max_width=4000,max_height=4000',
 
             'ine' => 'required|file|mimes:pdf|max:4096',
             'comprobante' => 'required|file|mimes:pdf|max:4096',
@@ -113,6 +108,10 @@ class RegistroTiendaController extends Controller
                 ]);
             }
         });
+
+        if ($user->hasRol('tienda')) {
+            return redirect('/store')->with('status', 'Tu solicitud de nueva tienda fue enviada. El administrador la revisará pronto.');
+        }
 
         return redirect()->route('registro.tienda.pendiente');
     }

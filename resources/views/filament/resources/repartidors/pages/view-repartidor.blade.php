@@ -163,7 +163,84 @@
             </div>
 
         </div>
+
+        {{-- ZONA DE ENTREGA (ancho completo) --}}
+        <div class="vr-card vr-zona-card">
+            <p class="vr-card-label">Zona de entrega</p>
+
+            @if ($record->rep_lat && $record->rep_lng)
+
+                {{-- Chips de info --}}
+                <div class="vr-zona-chips">
+                    @if ($record->rep_ciudad)
+                        <span class="vr-zona-chip">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>
+                            {{ $record->rep_ciudad }}@if($record->rep_entidad), {{ $record->rep_entidad }}@endif
+                        </span>
+                    @endif
+                    @if ($record->rep_colonia)
+                        <span class="vr-zona-chip">Col. {{ $record->rep_colonia }}</span>
+                    @endif
+                    @if ($record->rep_cp)
+                        <span class="vr-zona-chip">CP {{ $record->rep_cp }}</span>
+                    @endif
+                    <span class="vr-zona-chip vr-zona-chip-radio">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Z"/></svg>
+                        Radio: {{ $record->rep_radio_km ?? 10 }} km
+                    </span>
+                </div>
+
+                {{-- Mapa --}}
+                <div id="vr-mapa"></div>
+
+            @else
+                <div class="vr-zona-empty">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
+                    </svg>
+                    <p>Este repartidor aún no ha configurado su zona de entrega.</p>
+                </div>
+            @endif
+        </div>
+
     </div>
+
+    @if ($record->rep_lat && $record->rep_lng)
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const lat    = {{ (float) $record->rep_lat }};
+                const lng    = {{ (float) $record->rep_lng }};
+                const radio  = {{ (int) ($record->rep_radio_km ?? 10) }};
+
+                const mapa = L.map('vr-mapa', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    scrollWheelZoom: false,
+                }).setView([lat, lng], 12);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+
+                const icon = L.divIcon({
+                    className: '',
+                    html: '<div style="width:14px;height:14px;background:#7cc10a;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>',
+                    iconAnchor: [7, 7],
+                });
+
+                L.marker([lat, lng], { icon }).addTo(mapa);
+
+                L.circle([lat, lng], {
+                    radius: radio * 1000,
+                    color: '#7cc10a',
+                    fillColor: '#a8df11',
+                    fillOpacity: 0.15,
+                    weight: 2,
+                }).addTo(mapa);
+            });
+        </script>
+    @endif
 
     <style>
         .vr-wrap { font-family: 'Sora', sans-serif; padding: 0.5rem 0 2rem; }
@@ -265,6 +342,37 @@
             text-decoration: none; flex-shrink: 0;
         }
         .vr-doc-ver:hover { background: #f0fde0; }
+
+        /* ── Zona de entrega ─────────────────────────── */
+        .vr-zona-card { margin-top: 0; }
+
+        #vr-mapa {
+            width: 100%; height: 320px;
+            border-radius: 10px;
+            border: 1.5px solid #d4edaa;
+            overflow: hidden;
+        }
+
+        .vr-zona-chips {
+            display: flex; flex-wrap: wrap; gap: 0.5rem;
+            margin-bottom: 0.85rem;
+        }
+        .vr-zona-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: #f0fde0; border: 1px solid #d4f0a0;
+            border-radius: 999px; padding: 0.2rem 0.7rem;
+            font-size: 0.75rem; font-weight: 600; color: #3a6e04;
+        }
+        .vr-zona-chip svg { width: 13px; height: 13px; }
+        .vr-zona-chip-radio { background: #e4f6cc; border-color: #a8df11; font-weight: 700; }
+
+        .vr-zona-empty {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 0.6rem; padding: 2rem;
+            color: #bbb; font-size: 0.82rem; text-align: center;
+        }
+        .vr-zona-empty svg { width: 36px; height: 36px; color: #d4edaa; }
     </style>
 
 </x-filament-panels::page>

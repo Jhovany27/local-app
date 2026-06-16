@@ -155,3 +155,24 @@
     background: #f3f4f6;
     color: #111;
 }
+.sel-btn-nueva {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: "Sora", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.6rem 1.1rem;
+    border-radius: 0.65rem;
+    border: 1.5px dashed #a8df11;
+    background: #f5fde6;
+    color: #4a8a06;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+}
+.sel-btn-nueva:hover {
+    background: #ebfac8;
+    border-color: #7cc10a;
+    color: #3a6e04;
+}

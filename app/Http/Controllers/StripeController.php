@@ -18,10 +18,14 @@ class StripeController extends Controller
     public function crearIntent(Request $request)
     {
         $pedidoId = $request->pedido_id;
-        $tipoEntrega = $request->tipo_entrega ?? 'domicilio'; //  recibir tipo entrega
+        $tipoEntrega = $request->tipo_entrega ?? 'domicilio';
+
+        $clienteId = Auth::user()?->cliente?->cli_id;
+        abort_unless($clienteId, 403);
 
         $pedido = Pedido::with('tienda')
             ->where('ped_id', $pedidoId)
+            ->where('ped_fk_cliente', $clienteId)
             ->where('ped_estado', 'carrito')
             ->firstOrFail();
 
@@ -31,7 +35,9 @@ class StripeController extends Controller
 
         if ($tipoEntrega === 'domicilio') {
             $direccion = session('direccion_id')
-                ? \App\Models\Direccion::find(session('direccion_id'))
+                ? \App\Models\Direccion::where('drc_id', session('direccion_id'))
+                    ->where('user_id', Auth::id())
+                    ->first()
                 : null;
 
             if (
@@ -86,7 +92,19 @@ class StripeController extends Controller
             return back()->withErrors(['pago' => 'El pago no fue completado.']);
         }
 
-        $pedido = Pedido::with('tienda')->findOrFail($request->pedido_id);
+        $clienteId = Auth::user()?->cliente?->cli_id;
+        abort_unless($clienteId, 403);
+
+        // Verificar que el PaymentIntent fue creado para este usuario/pedido
+        if ((int) ($intent->metadata['pedido_id'] ?? 0) !== (int) $request->pedido_id ||
+            (int) ($intent->metadata['user_id']   ?? 0) !== Auth::id()) {
+            abort(403, 'El pago no corresponde a este pedido.');
+        }
+
+        $pedido = Pedido::with('tienda')
+            ->where('ped_id', $request->pedido_id)
+            ->where('ped_fk_cliente', $clienteId)
+            ->firstOrFail();
 
         //  Calcular costo de envío
         $subtotal   = $pedido->detalles()->sum('det_subtotal');
@@ -94,7 +112,9 @@ class StripeController extends Controller
 
         if ($request->tipo_entrega === 'domicilio') {
             $direccion = session('direccion_id')
-                ? \App\Models\Direccion::find(session('direccion_id'))
+                ? \App\Models\Direccion::where('drc_id', session('direccion_id'))
+                    ->where('user_id', Auth::id())
+                    ->first()
                 : null;
 
             if (

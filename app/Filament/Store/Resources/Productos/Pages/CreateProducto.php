@@ -26,6 +26,9 @@ class CreateProducto extends CreateRecord
 
         $data['pro_fk_tienda'] = $tiendaId;
 
+        // Quitar campos que no pertenecen al modelo Producto
+        unset($data['registrar_stock'], $data['stock_inicial'], $data['stock_minimo']);
+
         return $data;
     }
 
@@ -54,24 +57,26 @@ class CreateProducto extends CreateRecord
     protected function afterCreate(): void
     {
         $producto = $this->record;
+        $data     = $this->data;
 
-        $stockInicial = $this->data['stock_inicial'];
-        $stockMinimo = $this->data['stock_minimo'];
+        $registrarStock = $data['registrar_stock'] ?? false;
+        $stockInicial   = $registrarStock ? (int) ($data['stock_inicial'] ?? 0) : 0;
+        $stockMinimo    = $registrarStock ? (int) ($data['stock_minimo']  ?? 0) : 0;
 
-        // CREAR INVENTARIO
         Inventario::create([
-            'inv_stock_actual' => $stockInicial,
-            'inv_stock_minimo' => $stockMinimo,
+            'inv_stock_actual'  => $stockInicial,
+            'inv_stock_minimo'  => $stockMinimo,
             'inv_actualizacion' => now(),
-            'inv_fk_producto' => $producto->pro_id,
+            'inv_fk_producto'   => $producto->pro_id,
         ]);
 
-        // REGISTRAR MOVIMIENTO INICIAL
-        MovimientoInventario::create([
-            'mov_tipo' => 'entrada',
-            'mov_cantidad' => $stockInicial,
-            'mov_fecha' => now(),
-            'mov_fk_producto' => $producto->pro_id,
-        ]);
+        if ($stockInicial > 0) {
+            MovimientoInventario::create([
+                'mov_tipo'       => 'entrada',
+                'mov_cantidad'   => $stockInicial,
+                'mov_fecha'      => now(),
+                'mov_fk_producto' => $producto->pro_id,
+            ]);
+        }
     }
 }

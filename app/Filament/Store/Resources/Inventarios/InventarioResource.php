@@ -36,9 +36,19 @@ class InventarioResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $tiendaId = (int) session('store_tienda_id');
+
+        $pertenece = $tiendaId && $user->tiendas()->where('tie_id', $tiendaId)->exists();
+
+        if (! $pertenece) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
+
         return parent::getEloquentQuery()
             ->with('inventario')
-            ->where('pro_fk_tienda', session('store_tienda_id'));
+            ->where('pro_fk_tienda', $tiendaId);
     }
 
     public static function table(Table $table): Table

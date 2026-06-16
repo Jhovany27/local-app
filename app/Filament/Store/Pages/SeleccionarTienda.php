@@ -34,7 +34,10 @@ class SeleccionarTienda extends Page
 
         $tiendas = $user->tiendas()->get();
 
-        abort_if($tiendas->isEmpty(), 403, 'No tienes tiendas asignadas.');
+        if ($tiendas->isEmpty()) {
+            $this->redirect(route('registro.tienda'));
+            return;
+        }
 
         if ($tiendas->count() === 1) {
             session(['store_tienda_id' => $tiendas->first()->tie_id]);

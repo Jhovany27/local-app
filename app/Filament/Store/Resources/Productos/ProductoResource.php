@@ -15,6 +15,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,25 +35,33 @@ class ProductoResource extends Resource
         return $schema
             ->components([
                 TextInput::make('pro_codigo')
+                    ->label('Código')
                     ->required(),
 
                 TextInput::make('pro_nombre')
+                    ->label('Nombre')
                     ->required(),
 
                 TextInput::make('pro_marca')
+                    ->label('Marca')
                     ->required(),
 
                 Textarea::make('pro_detalles')
+                    ->label('Descripción')
                     ->required()
                     ->columnSpanFull(),
 
                 TextInput::make('pro_precio_prove')
+                    ->label('Precio de proveedor')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('$'),
 
                 TextInput::make('pro_precio_venta')
+                    ->label('Precio de venta')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('$'),
 
                 Select::make('pro_estado')
                     ->label('Estado')
@@ -60,6 +69,7 @@ class ProductoResource extends Resource
                         1 => 'Activo',
                         0 => 'Inactivo',
                     ])
+                    ->default(1)
                     ->required(),
 
                 Hidden::make('pro_fk_tienda')
@@ -75,24 +85,38 @@ class ProductoResource extends Resource
                     ->searchable()
                     ->preload()
                     ->required(),
+
+                Toggle::make('registrar_stock')
+                    ->label('Registrar stock')
+                    ->helperText('Activa esta opción si deseas llevar control de inventario para este producto.')
+                    ->default(false)
+                    ->live()
+                    ->columnSpanFull(),
+
                 TextInput::make('stock_inicial')
                     ->label('Stock inicial')
                     ->numeric()
                     ->minValue(0)
-                    ->required(),
+                    ->default(0)
+                    ->visible(fn ($get) => $get('registrar_stock'))
+                    ->required(fn ($get) => $get('registrar_stock')),
 
                 TextInput::make('stock_minimo')
                     ->label('Stock mínimo')
                     ->numeric()
                     ->minValue(0)
-                    ->required(),
+                    ->default(0)
+                    ->visible(fn ($get) => $get('registrar_stock'))
+                    ->required(fn ($get) => $get('registrar_stock')),
+
                 FileUpload::make('foto_producto')
                     ->label('Foto del producto')
                     ->image()
                     ->disk('public')
                     ->directory('fotoproductos')
                     ->visibility('public')
-                    ->nullable(),
+                    ->nullable()
+                    ->columnSpanFull(),
             ]);
     }
 

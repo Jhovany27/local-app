@@ -54,6 +54,7 @@ class Tienda extends Model
         'tie_latitud',
         'tie_longitud',
         'tie_direccion',
+        'tie_estado',
         'tie_fecha_registro',
         'user_id',
     ];

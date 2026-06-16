@@ -90,6 +90,10 @@ class StorePanelProvider extends PanelProvider
                     ->label('Ir al portal')
                     ->icon('heroicon-o-home')
                     ->url(fn() => route('portal')),
+                MenuItem::make()
+                    ->label('Registrar nueva tienda')
+                    ->icon('heroicon-o-plus-circle')
+                    ->url(fn() => route('registro.tienda')),
             ])
 
             ->middleware([

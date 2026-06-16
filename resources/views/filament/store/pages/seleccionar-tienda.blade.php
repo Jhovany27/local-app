@@ -8,6 +8,15 @@
             <p class="sel-header-sub">Elige la tienda que vas a administrar hoy.</p>
         </div>
 
+        <div style="margin-bottom:1.5rem;">
+            <a href="{{ route('registro.tienda') }}" class="sel-btn-nueva">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;flex-shrink:0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Registrar nueva tienda
+            </a>
+        </div>
+
         <div class="sel-grid">
             @foreach ($this->tiendas as $tienda)
                 <div class="sel-card">

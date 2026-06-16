@@ -234,7 +234,9 @@ class CarritoController extends Controller
             ->firstOrFail();
 
         $direccion = session('direccion_id')
-            ? \App\Models\Direccion::find(session('direccion_id'))
+            ? \App\Models\Direccion::where('drc_id', session('direccion_id'))
+                ->where('user_id', Auth::id())
+                ->first()
             : null;
 
         //  Calcular costo de envío si hay coordenadas

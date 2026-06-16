@@ -87,7 +87,7 @@ class RepartidorAuthController extends Controller
             'ine'               => ['required', 'file', 'mimes:pdf', 'max:4096'],
             'licencia'          => ['required', 'file', 'mimes:pdf', 'max:4096'],
             'circulacion'       => ['required', 'file', 'mimes:pdf', 'max:4096'],
-            'foto_perfil'       => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'foto_perfil'       => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4000,max_height=4000'],
         ]);
 
         DB::transaction(function () use ($data, $request) {

@@ -254,6 +254,30 @@ class RepartidorController extends Controller
             ->with('success', '¡Pedido entregado! Buen trabajo.');
     }
 
+    // ── ACTUALIZAR ZONA ───────────────────────────────────
+    public function actualizarZona(Request $request)
+    {
+        $request->validate([
+            'rep_lat'      => 'required|numeric',
+            'rep_lng'      => 'required|numeric',
+            'rep_ciudad'   => 'required|string|max:150',
+            'rep_colonia'  => 'nullable|string|max:200',
+            'rep_cp'       => 'nullable|string|max:10',
+            'rep_entidad'  => 'nullable|string|max:150',
+            'rep_radio_km' => 'required|integer|min:1|max:50',
+        ]);
+
+        $repartidor = $this->getRepartidor();
+
+        $repartidor->update($request->only([
+            'rep_lat', 'rep_lng', 'rep_ciudad',
+            'rep_colonia', 'rep_cp', 'rep_entidad', 'rep_radio_km',
+        ]));
+
+        return redirect()->route('repartidor.perfil')
+            ->with('zona_ok', 'Zona de entrega actualizada correctamente.');
+    }
+
     // ── HISTORIAL ─────────────────────────────────────────
     public function historial()
     {

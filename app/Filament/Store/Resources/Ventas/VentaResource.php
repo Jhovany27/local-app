@@ -10,6 +10,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class VentaResource extends Resource
 {
@@ -38,9 +39,19 @@ class VentaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $tiendaId = (int) session('store_tienda_id');
+
+        $pertenece = $tiendaId && $user->tiendas()->where('tie_id', $tiendaId)->exists();
+
+        if (! $pertenece) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
+
         return parent::getEloquentQuery()
             ->with(['detalles.producto'])
-            ->where('ven_fk_tienda', session('store_tienda_id'))
+            ->where('ven_fk_tienda', $tiendaId)
             ->latest('ven_fecha');
     }
 

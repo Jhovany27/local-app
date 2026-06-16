@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\Tienda;
 use App\Models\Producto;
 use App\Models\CategoriaProducto;
@@ -57,7 +58,7 @@ class ClienteController extends Controller
                   );
             });
         } elseif (!empty($dir->drc_ciudad)) {
-            $query->where('tie_direccion', 'LIKE', '%' . $dir->drc_ciudad . '%');
+            $query->where('tie_direccion', 'LIKE', '%' . Str::escapeLike($dir->drc_ciudad) . '%');
         }
 
         return $query->get();

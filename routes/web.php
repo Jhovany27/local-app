@@ -52,7 +52,7 @@ Route::get('/registro', [RegistroController::class, 'create'])->name('registro.c
 Route::post('/registro', [RegistroController::class, 'store'])->name('registro.store');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -63,7 +63,7 @@ Route::get('/cliente/login', [\App\Http\Controllers\ClienteAuthController::class
     ->name('cliente.login');
 
 Route::post('/cliente/login', [\App\Http\Controllers\ClienteAuthController::class, 'login'])
-    ->name('cliente.login.store');
+    ->name('cliente.login.store')->middleware('throttle:5,1');
 
 Route::get('/cliente/registro', [\App\Http\Controllers\ClienteAuthController::class, 'showRegistro'])
     ->name('cliente.registro');
@@ -204,7 +204,7 @@ Route::get('/store', function () {
 
 // ── AUTH (sin middleware) ─────────────────────────────
 Route::get('/driver/login',     [\App\Http\Controllers\RepartidorAuthController::class, 'showLogin'])->name('repartidor.login');
-Route::post('/driver/login',    [\App\Http\Controllers\RepartidorAuthController::class, 'login'])->name('repartidor.login.store');
+Route::post('/driver/login',    [\App\Http\Controllers\RepartidorAuthController::class, 'login'])->name('repartidor.login.store')->middleware('throttle:5,1');
 Route::get('/driver/registro',  [\App\Http\Controllers\RepartidorAuthController::class, 'showRegistro'])->name('repartidor.registro');
 Route::post('/driver/registro', [\App\Http\Controllers\RepartidorAuthController::class, 'registro'])->name('repartidor.registro.store');
 
@@ -224,6 +224,7 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
         $fotoPerfil = $repartidor->documentos()->where('dor_fk_tipo_documento', 4)->first();
         return view('repartidor.perfil', compact('user', 'persona', 'repartidor', 'fotoPerfil'));
     })->name('repartidor.perfil');
+    Route::post('/zona',     [\App\Http\Controllers\RepartidorController::class, 'actualizarZona'])->name('repartidor.zona.update');
     Route::get('/historial', [\App\Http\Controllers\RepartidorController::class, 'historial'])->name('repartidor.historial');
 
     Route::get('/',                          [\App\Http\Controllers\RepartidorController::class, 'index'])->name('repartidor.index');

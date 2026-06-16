@@ -24,9 +24,33 @@ class Pedidos extends Page
 
     protected static ?int $navigationSort = 2;
 
+    public ?int $pedidoDetalleId = null;
+
     public function getTiendaId(): int
     {
         return (int) session('store_tienda_id');
+    }
+
+    public function verDetalle(int $id): void
+    {
+        $this->pedidoDetalleId = $id;
+    }
+
+    public function cerrarDetalle(): void
+    {
+        $this->pedidoDetalleId = null;
+    }
+
+    public function getPedidoDetalleProperty(): ?Pedido
+    {
+        if (! $this->pedidoDetalleId) return null;
+
+        return Pedido::with([
+            'detalles.producto',
+            'cliente.user.persona',
+            'pago',
+            'direccion',
+        ])->find($this->pedidoDetalleId);
     }
 
     public function getPedidosPendientesProperty()
@@ -52,7 +76,7 @@ class Pedidos extends Page
         return Pedido::with(['detalles.producto', 'cliente.user.persona'])
             ->where('ped_fk_tienda', $this->getTiendaId())
             ->whereIn('ped_estado', ['listo', 'completado'])
-            ->where('ped_confirmado_tienda', false) //  solo los no confirmados
+            ->where('ped_confirmado_tienda', false)
             ->latest('ped_fecha_pedido')
             ->get();
     }
