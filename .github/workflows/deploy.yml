@@ -14,19 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. PHP 8.2 (igual que el servidor)
-      - name: Setup PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, bcmath, ctype, fileinfo, openssl, pdo, tokenizer, xml, curl, gd, zip
-          coverage: none
-
-      # 3. Dependencias de PHP (sin dev, optimizado para producción)
-      - name: Instalar dependencias Composer
-        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
-
-      # 4. Node.js 20 + compilar assets
+      # 2. Node.js + compilar assets
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -46,7 +34,7 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
+          protocol: ftp
           port: 21
           local-dir: ./
           server-dir: /
@@ -54,7 +42,10 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+            **/.claude*
+            **/.claude*/**
             **/node_modules/**
+            **/vendor/**
             **/docker/**
             **/tests/**
             **/.env
