@@ -15,16 +15,16 @@ jobs:
         uses: actions/checkout@v4
 
       # 2. PHP 8.2 (igual que el servidor)
-      - name: Setup PHP 8.5
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.2'
           extensions: mbstring, bcmath, ctype, fileinfo, openssl, pdo, tokenizer, xml, curl, gd, zip
           coverage: none
 
       # 3. Dependencias de PHP (sin dev, optimizado para producción)
       - name: Instalar dependencias Composer
-        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
 
       # 4. Node.js 20 + compilar assets
       - name: Setup Node.js
