@@ -234,6 +234,75 @@
         }
     </script>
 
+    <script>
+        (function () {
+            function animarAlCarrito(btn, form) {
+                if (btn.dataset.animando === '1') return;
+                btn.dataset.animando = '1';
+
+                var cartEl = document.querySelector('.header-cart');
+                var btnRect = btn.getBoundingClientRect();
+
+                btn.style.transition = 'transform 0.15s ease-out, background 0.15s, color 0.15s, border-color 0.15s';
+                btn.style.transform   = 'scale(1.08)';
+                btn.style.background  = '#a8df11';
+                btn.style.color       = '#111';
+                btn.style.borderColor = '#a8df11';
+                setTimeout(function () { btn.style.transform = 'scale(1)'; }, 150);
+
+                if (!cartEl) {
+                    setTimeout(function () { form.submit(); }, 300);
+                    return;
+                }
+
+                var cartRect = cartEl.getBoundingClientRect();
+                var dot = document.createElement('span');
+                dot.style.cssText =
+                    'position:fixed;border-radius:50%;background:#a8df11;z-index:9999;pointer-events:none;' +
+                    'box-shadow:0 0 0 5px rgba(168,223,17,0.28);' +
+                    'left:' + (btnRect.left + btnRect.width  / 2 - 11) + 'px;' +
+                    'top:'  + (btnRect.top  + btnRect.height / 2 - 11) + 'px;' +
+                    'width:22px;height:22px;';
+                document.body.appendChild(dot);
+
+                void dot.offsetWidth;
+
+                var destX = cartRect.left + cartRect.width  / 2 - 6;
+                var destY = cartRect.top  + cartRect.height / 2 - 6;
+                dot.style.transition = 'left 0.48s cubic-bezier(0.2,0.8,0.4,1),top 0.48s cubic-bezier(0.2,0.8,0.4,1),width 0.48s,height 0.48s,opacity 0.48s,box-shadow 0.48s';
+                dot.style.left      = destX + 'px';
+                dot.style.top       = destY + 'px';
+                dot.style.width     = '12px';
+                dot.style.height    = '12px';
+                dot.style.opacity   = '0.2';
+                dot.style.boxShadow = 'none';
+
+                setTimeout(function () {
+                    dot.remove();
+                    cartEl.style.transition = 'transform 0.13s ease-out';
+                    cartEl.style.transform  = 'scale(1.5)';
+                    setTimeout(function () {
+                        cartEl.style.transform = 'scale(0.9)';
+                        setTimeout(function () {
+                            cartEl.style.transform = '';
+                            form.submit();
+                        }, 110);
+                    }, 130);
+                }, 490);
+            }
+
+            document.querySelectorAll('form').forEach(function (form) {
+                if (!form.querySelector('.btn-agregar, .rel-btn')) return;
+                form.addEventListener('submit', function (e) {
+                    var btn = form.querySelector('button[type="submit"]');
+                    if (!btn || btn.disabled || btn.dataset.animando === '1') return;
+                    e.preventDefault();
+                    animarAlCarrito(btn, form);
+                });
+            });
+        })();
+    </script>
+
 </body>
 
 </html>

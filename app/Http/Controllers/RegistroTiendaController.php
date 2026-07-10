@@ -47,9 +47,13 @@ class RegistroTiendaController extends Controller
             'tie_descripcion' => 'required|string|max:500',
             'tie_telefono' => 'required|string|max:20',
             'tie_direccion' => 'required|string|max:255',
-            'tie_latitud' => 'nullable|numeric',
-            'tie_longitud' => 'nullable|numeric',
+            'tie_municipio'      => 'nullable|string|max:150',
+            'tie_hora_apertura'  => 'required|date_format:H:i',
+            'tie_hora_cierre'    => 'required|date_format:H:i',
+            'tie_latitud'        => 'nullable|numeric',
+            'tie_longitud'       => 'nullable|numeric',
 
+            'tie_numero_cuenta' => 'required|digits:18',
             'fachada' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048|dimensions:max_width=4000,max_height=4000',
 
             'ine' => 'required|file|mimes:pdf|max:4096',
@@ -62,13 +66,17 @@ class RegistroTiendaController extends Controller
             $tienda = Tienda::create([
                 'tie_nombre' => $request->tie_nombre,
                 'tie_descripcion' => $request->tie_descripcion,
-                'tie_telefono' => $request->tie_telefono,
-                'tie_latitud' => $request->tie_latitud ?? 0,
-                'tie_longitud' => $request->tie_longitud ?? 0,
-                'tie_direccion' => $request->tie_direccion,
-                'tie_estado' => 0,
+                'tie_telefono'       => $request->tie_telefono,
+                'tie_numero_cuenta'  => $request->tie_numero_cuenta,
+                'tie_latitud'        => $request->tie_latitud ?? 0,
+                'tie_longitud'       => $request->tie_longitud ?? 0,
+                'tie_direccion'      => $request->tie_direccion,
+                'tie_municipio'      => $request->tie_municipio ?? null,
+                'tie_hora_apertura'  => $request->tie_hora_apertura,
+                'tie_hora_cierre'    => $request->tie_hora_cierre,
+                'tie_estado'         => 0,
                 'tie_fecha_registro' => now(),
-                'user_id' => $user->id,
+                'user_id'            => $user->id,
             ]);
 
             // FACHADA
@@ -135,15 +143,11 @@ class RegistroTiendaController extends Controller
 
         abort_unless($user, 403);
 
-        if ($user->hasRol('tienda')) {
-            return redirect('/store');
-        }
-
         if (!$user->tiendas()->exists()) {
             return redirect()->route('registro.tienda');
         }
 
-        // Obtener solo tiendas pendientes y rechazadas
+        // Tiendas en revisión o rechazadas (incluye tiendas de owners con rol aprobado)
         $tiendas = $user->tiendas()
             ->whereIn('tie_estado', [
                 \App\Models\Tienda::ESTADO_PENDIENTE,
@@ -152,7 +156,8 @@ class RegistroTiendaController extends Controller
             ->get();
 
         if ($tiendas->isEmpty()) {
-            return redirect()->route('registro.tienda');
+            // Todas las tiendas están aprobadas → ir al panel
+            return redirect('/store');
         }
 
         return view('tienda.estado', compact('tiendas'));

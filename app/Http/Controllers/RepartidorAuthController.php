@@ -74,16 +74,17 @@ class RepartidorAuthController extends Controller
             'per_nombre'        => ['required', 'string', 'max:255'],
             'per_paterno'       => ['required', 'string', 'max:255'],
             'per_telefono'      => ['required', 'string', 'max:30'],
-            'rep_tipo_vehiculo' => ['required', 'in:Motocicleta,Automovil,Bicicleta,Pie'],
-            'rep_lat'           => ['nullable', 'numeric'],
-            'rep_lng'           => ['nullable', 'numeric'],
+            'rep_tipo_vehiculo'  => ['required', 'in:Motocicleta,Automovil,Bicicleta,Pie'],
+            'rep_numero_cuenta'  => ['required', 'digits:18'],
+            'rep_lat'            => ['nullable', 'numeric'],
+            'rep_lng'            => ['nullable', 'numeric'],
             'rep_radio_km'      => ['nullable', 'integer', 'min:1', 'max:50'],
             'rep_cp'            => ['nullable', 'string', 'max:15'],
             'rep_colonia'       => ['nullable', 'string', 'max:200'],
             'rep_entidad'       => ['nullable', 'string', 'max:150'],
             'rep_ciudad'        => ['nullable', 'string', 'max:150'],
             'email'             => ['required', 'email', 'unique:users,email'],
-            'password'          => ['required', 'confirmed', Password::min(8)],
+            'password'          => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'ine'               => ['required', 'file', 'mimes:pdf', 'max:4096'],
             'licencia'          => ['required', 'file', 'mimes:pdf', 'max:4096'],
             'circulacion'       => ['required', 'file', 'mimes:pdf', 'max:4096'],
@@ -110,16 +111,17 @@ class RepartidorAuthController extends Controller
             }
 
             $repartidor = Repartidor::forceCreate([
-                'user_id'           => $user->id,
-                'rep_tipo_vehiculo' => $data['rep_tipo_vehiculo'],
-                'rep_lat'           => $data['rep_lat']      ?? null,
-                'rep_lng'           => $data['rep_lng']      ?? null,
-                'rep_radio_km'      => $data['rep_radio_km'] ?? 10,
-                'rep_cp'            => $data['rep_cp']       ?? null,
-                'rep_colonia'       => $data['rep_colonia']  ?? null,
-                'rep_entidad'       => $data['rep_entidad']  ?? null,
-                'rep_ciudad'        => $data['rep_ciudad']   ?? null,
-                'rep_estado'        => 0,
+                'user_id'            => $user->id,
+                'rep_tipo_vehiculo'  => $data['rep_tipo_vehiculo'],
+                'rep_numero_cuenta'  => $data['rep_numero_cuenta'] ?? null,
+                'rep_lat'            => $data['rep_lat']      ?? null,
+                'rep_lng'            => $data['rep_lng']      ?? null,
+                'rep_radio_km'       => $data['rep_radio_km'] ?? 10,
+                'rep_cp'             => $data['rep_cp']       ?? null,
+                'rep_colonia'        => $data['rep_colonia']  ?? null,
+                'rep_entidad'        => $data['rep_entidad']  ?? null,
+                'rep_ciudad'         => $data['rep_ciudad']   ?? null,
+                'rep_estado'         => 0,
             ]);
 
             $user->roles()->attach(3);
@@ -237,6 +239,65 @@ class RepartidorAuthController extends Controller
                 );
             }
         }
+    }
+
+    // ── EDITAR PERFIL ─────────────────────────────────────
+    public function editarPerfil()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        abort_unless($user && $user->hasRol('repartidor'), 403);
+
+        $repartidor = $user->repartidors()->firstOrFail();
+        $persona    = $user->persona;
+        $docs       = $repartidor->documentos()->get()->keyBy('dor_fk_tipo_documento');
+
+        return view('repartidor.editar-perfil', compact('user', 'persona', 'repartidor', 'docs'));
+    }
+
+    public function actualizarPerfil(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        abort_unless($user && $user->hasRol('repartidor'), 403);
+
+        $repartidor = $user->repartidors()->firstOrFail();
+
+        $data = $request->validate([
+            'per_nombre'                => ['required', 'string', 'max:255'],
+            'per_paterno'               => ['required', 'string', 'max:255'],
+            'per_telefono'              => ['required', 'string', 'max:30'],
+            'nueva_password'            => ['nullable', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
+            'ine'                       => ['nullable', 'file', 'mimes:pdf', 'max:4096'],
+            'licencia'                  => ['nullable', 'file', 'mimes:pdf', 'max:4096'],
+            'circulacion'               => ['nullable', 'file', 'mimes:pdf', 'max:4096'],
+            'foto_perfil'               => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        DB::transaction(function () use ($user, $data, $request, $repartidor) {
+            if ($user->persona) {
+                $user->persona->update([
+                    'per_nombre'   => $data['per_nombre'],
+                    'per_paterno'  => $data['per_paterno'],
+                    'per_telefono' => $data['per_telefono'],
+                ]);
+            }
+
+            $user->name = $data['per_nombre'] . ' ' . $data['per_paterno'];
+            if (!empty($data['nueva_password'])) {
+                $user->password = $data['nueva_password'];
+            }
+            $user->save();
+
+            $repartidor->rep_estado         = 0;
+            $repartidor->rep_motivo_rechazo = null;
+            $repartidor->save();
+
+            $this->guardarDocumentos($repartidor->rep_id, $request);
+        });
+
+        return redirect()->route('repartidor.pendiente')
+            ->with('info', 'Tus cambios están en revisión. El equipo verificará tu información antes de reactivarte.');
     }
 
     // ── PENDIENTE ─────────────────────────────────────────

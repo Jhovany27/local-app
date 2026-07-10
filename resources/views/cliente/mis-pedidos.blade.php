@@ -29,6 +29,9 @@
             @if (session('success'))
                 <div class="success-msg">{{ session('success') }}</div>
             @endif
+            @if (session('error'))
+                <div class="success-msg" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca;">{{ session('error') }}</div>
+            @endif
 
             @forelse($pedidos as $pedido)
                 @php
@@ -41,9 +44,24 @@
                         $badgeLabel = 'Cancelado';
                         $badgePulse = false;
                     } elseif ($pedido->ped_estado === 'completado') {
-                        $badgeClass = 'badge-completado';
-                        $badgeLabel = 'Completado';
-                        $badgePulse = false;
+                        // Para domicilio: si el repartidor aún está en tránsito, mostrar su estado real
+                        if ($esDomicilio && $asr !== null && $asr < 3) {
+                            if ($asr === 0) {
+                                $badgeClass = 'badge-repartidor-yendo';
+                                $badgeLabel = 'Repartidor en camino';
+                            } elseif ($asr === 1) {
+                                $badgeClass = 'badge-repartidor-recoge';
+                                $badgeLabel = 'Repartidor recogiendo';
+                            } else { // asr === 2
+                                $badgeClass = 'badge-repartidor-camino';
+                                $badgeLabel = 'En camino a ti';
+                            }
+                            $badgePulse = true;
+                        } else {
+                            $badgeClass = 'badge-completado';
+                            $badgeLabel = 'Completado';
+                            $badgePulse = false;
+                        }
                     } elseif ($pedido->ped_estado === 'pendiente') {
                         $badgeClass = 'badge-pendiente';
                         $badgeLabel = 'Pendiente';
@@ -103,22 +121,22 @@
                             [
                                 'label' => 'Repartidor en camino',
                                 'sub' => 'El repartidor va a la tienda',
-                                'done' => in_array($pedido->ped_estado, ['listo', 'completado']) && $asr >= 0,
+                                'done' => $asr !== null && $asr >= 0,
                             ],
                             [
                                 'label' => 'Recogiendo pedido',
                                 'sub' => 'El repartidor recoge tu pedido',
-                                'done' => in_array($pedido->ped_estado, ['listo', 'completado']) && $asr >= 1,
+                                'done' => $asr !== null && $asr >= 1,
                             ],
                             [
                                 'label' => 'En camino a ti',
                                 'sub' => 'El repartidor va a tu domicilio',
-                                'done' => in_array($pedido->ped_estado, ['listo', 'completado']) && $asr >= 2,
+                                'done' => $asr !== null && $asr >= 2,
                             ],
                             [
                                 'label' => 'Entregado',
                                 'sub' => 'Pedido completado',
-                                'done' => $pedido->ped_estado === 'completado',
+                                'done' => $asr !== null && $asr >= 3,
                             ],
                         ];
                     } else {
@@ -160,7 +178,7 @@
                     </div>
 
                     {{-- TRACKER domicilio --}}
-                    @if ($esDomicilio && $pedido->ped_estado === 'listo' && $asr !== null)
+                    @if ($esDomicilio && in_array($pedido->ped_estado, ['listo', 'completado']) && $asr !== null && $asr < 3)
                         @php $steps = [['label'=>'Listo','done'=>true],['label'=>'Rep. en camino','done'=>$asr>=0],['label'=>'Recogiendo','done'=>$asr>=1],['label'=>'En camino a ti','done'=>$asr>=2],['label'=>'Entregado','done'=>$asr>=3]]; @endphp
                         <div class="tracker">
                             <p class="tracker-label">Seguimiento</p>
@@ -313,6 +331,68 @@
                             </div>
                         </div>
 
+                        {{-- CÓDIGO DE ENTREGA (solo cuando repartidor está en camino al cliente) --}}
+                        @if($esDomicilio && $asr === 2)
+                        <div class="modal-section" style="margin-top:1rem;" id="pin-section-{{ $pedido->ped_id }}">
+                            <p class="modal-section-label">Código de entrega</p>
+
+                            <div id="pin-display-{{ $pedido->ped_id }}" style="display:none;background:#f0fde0;border:2px solid #a8df11;border-radius:1rem;padding:1.25rem;text-align:center;margin-bottom:.75rem;">
+                                <p style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#4a8a06;margin-bottom:.4rem;">Tu código de entrega</p>
+                                <p id="pin-num-{{ $pedido->ped_id }}" style="font-size:2.75rem;font-weight:900;color:#1a1a1a;letter-spacing:.6rem;font-variant-numeric:tabular-nums;"></p>
+                                <p style="font-size:.72rem;color:#888;margin-top:.5rem;">Muéstraselo al repartidor cuando llegue</p>
+                            </div>
+
+                            <button type="button" id="pin-btn-{{ $pedido->ped_id }}"
+                                onclick="generarPinEntrega({{ $pedido->ped_id }}, this)"
+                                style="width:100%;padding:.85rem;background:linear-gradient(135deg,#a8df11,#7cc10a);border:none;border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:800;color:#1a1a1a;cursor:pointer;">
+                                Generar código de entrega
+                            </button>
+                            <p style="font-size:.72rem;color:#aaa;text-align:center;margin-top:.4rem;">El repartidor está en camino — genera el código cuando toque tu puerta</p>
+                        </div>
+                        @endif
+
+                        {{-- MOTIVO CANCELACIÓN --}}
+                        @if($pedido->ped_estado === 'cancelado' && $pedido->ped_motivo_cancelacion)
+                        <div class="modal-section" style="margin-top:1rem;">
+                            <p class="modal-section-label">Motivo de cancelación</p>
+                            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:0.75rem;padding:0.85rem 1rem;margin-top:0.35rem;">
+                                <p style="font-size:0.72rem;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">
+                                    Cancelado por {{ $pedido->ped_cancelado_por === 'tienda' ? 'la tienda' : 'ti' }}
+                                </p>
+                                <p style="font-size:0.82rem;color:#7f1d1d;line-height:1.45;">{{ $pedido->ped_motivo_cancelacion }}</p>
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- CANCELAR PEDIDO (solo si está pendiente) --}}
+                        @if($pedido->ped_estado === 'pendiente')
+                        <div class="modal-section" style="margin-top:1rem;">
+                            <button type="button"
+                                onclick="abrirCancelacion({{ $pedido->ped_id }});event.stopPropagation()"
+                                style="width:100%;padding:0.75rem;background:#fff;border:1.5px solid #fca5a5;border-radius:0.85rem;color:#dc2626;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;transition:background 0.2s;"
+                                onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">
+                                Cancelar pedido
+                            </button>
+                        </div>
+                        @endif
+
+                        {{-- VOLVER A PEDIR (completado o cancelado) --}}
+                        @if(in_array($pedido->ped_estado, ['completado', 'cancelado']))
+                        <div class="modal-section" style="margin-top:1rem;">
+                            <form method="POST" action="{{ route('cliente.pedido.repetir', $pedido->ped_id) }}" onclick="event.stopPropagation()">
+                                @csrf
+                                <button type="submit"
+                                    style="width:100%;padding:0.75rem;background:#f0fce6;border:1.5px solid #a8df11;border-radius:0.85rem;color:#3a6b00;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:background 0.2s;"
+                                    onmouseover="this.style.background='#e2f8c6'" onmouseout="this.style.background='#f0fce6'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;flex-shrink:0;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Volver a pedir
+                                </button>
+                            </form>
+                        </div>
+                        @endif
+
                         {{-- STATUS TIMELINE --}}
                         <div class="modal-section" style="margin-top:1rem;">
                             <p class="modal-section-label">Estado del pedido</p>
@@ -350,6 +430,35 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
+
+                {{-- MODAL CANCELACIÓN --}}
+                <div id="modal-cancelar-{{ $pedido->ped_id }}" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)cerrarCancelacion({{ $pedido->ped_id }})">
+                    <div style="background:#fff;border-radius:1.5rem 1.5rem 0 0;width:100%;max-width:430px;padding:1.5rem 1.25rem 2rem;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                            <p style="font-size:0.95rem;font-weight:800;color:#111;">Cancelar pedido</p>
+                            <button onclick="cerrarCancelacion({{ $pedido->ped_id }})" style="background:none;border:none;cursor:pointer;color:#888;display:flex;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <p style="font-size:0.82rem;color:#666;margin-bottom:1rem;">¿Por qué deseas cancelar este pedido? La tienda recibirá tu motivo.</p>
+                        <form method="POST" action="{{ route('cliente.pedido.cancelar', $pedido->ped_id) }}">
+                            @csrf
+                            <textarea name="motivo" rows="3" required minlength="5" maxlength="500"
+                                placeholder="Ej: Me equivoqué en el pedido, ya no lo necesito..."
+                                style="width:100%;padding:0.75rem;border:1.5px solid #e5e7eb;border-radius:0.75rem;font-family:inherit;font-size:0.85rem;resize:none;outline:none;color:#111;"></textarea>
+                            <div style="display:flex;gap:0.65rem;margin-top:0.85rem;">
+                                <button type="button" onclick="cerrarCancelacion({{ $pedido->ped_id }})"
+                                    style="flex:1;padding:0.75rem;background:#f3f4f6;border:none;border-radius:0.85rem;font-family:inherit;font-size:0.85rem;font-weight:700;color:#555;cursor:pointer;">
+                                    Volver
+                                </button>
+                                <button type="submit"
+                                    style="flex:2;padding:0.75rem;background:#dc2626;border:none;border-radius:0.85rem;font-family:inherit;font-size:0.85rem;font-weight:800;color:#fff;cursor:pointer;">
+                                    Sí, cancelar pedido
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -409,6 +518,30 @@
 
     @auth
         <script>
+            // ── GENERAR PIN ENTREGA ───────────────────────────────
+            async function generarPinEntrega(pedidoId, btn) {
+                btn.disabled = true;
+                btn.textContent = 'Generando...';
+                try {
+                    const res = await fetch(`/cliente/pedido/${pedidoId}/generar-pin`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        }
+                    });
+                    if (!res.ok) throw new Error();
+                    const data = await res.json();
+                    document.getElementById(`pin-num-${pedidoId}`).textContent = data.pin;
+                    document.getElementById(`pin-display-${pedidoId}`).style.display = 'block';
+                    btn.style.display = 'none';
+                } catch {
+                    btn.disabled = false;
+                    btn.textContent = 'Generar código de entrega';
+                    alert('Error al generar el código. Intenta de nuevo.');
+                }
+            }
+
             // ── MODAL DETALLE ─────────────────────────────────────
             function abrirDetalle(id) {
                 document.getElementById('modal-' + id).classList.add('open');
@@ -417,6 +550,19 @@
 
             function cerrarDetalle(id) {
                 document.getElementById('modal-' + id).classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            // ── MODAL CANCELACIÓN ─────────────────────────────────
+            function abrirCancelacion(id) {
+                cerrarDetalle(id);
+                const m = document.getElementById('modal-cancelar-' + id);
+                m.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function cerrarCancelacion(id) {
+                document.getElementById('modal-cancelar-' + id).style.display = 'none';
                 document.body.style.overflow = '';
             }
 

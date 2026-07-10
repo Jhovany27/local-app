@@ -54,11 +54,17 @@
                 </div>
             </div>
 
-            {{-- TOTAL --}}
+            {{-- GANANCIA --}}
+            @php
+                $subtotalProductos = $record->detalles->sum('vde_subtotal');
+                $pct       = \App\Models\ConfiguracionComision::porcentajeActual();
+                $comision  = round($subtotalProductos * $pct / 100, 2);
+                $ganancia  = round($subtotalProductos - $comision, 2);
+            @endphp
             <div class="vv-total-card">
                 <div>
-                    <p class="vv-total-label">Total de la venta</p>
-                    <p class="vv-total-val">${{ number_format($record->ven_total, 2) }}</p>
+                    <p class="vv-total-label">Tu ganancia</p>
+                    <p class="vv-total-val">${{ number_format($ganancia, 2) }}</p>
                 </div>
                 <div class="vv-total-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -66,6 +72,59 @@
                     </svg>
                 </div>
             </div>
+
+            {{-- PIN DE RECOGIDA (solo efectivo) --}}
+            @php
+                $pedido      = $record->pedido;
+                $esEfectivo  = strtolower($pedido?->pago?->pag_metodo_pago ?? '') === 'efectivo';
+                $repPersona  = $pedido?->asignacion?->repartidor?->user?->persona;
+                $pinBloqueado = ($pedido?->ped_pin_intentos ?? 0) >= 5;
+            @endphp
+            @if($esEfectivo && $pedido)
+            <div class="vv-card" style="border-color:#fbbf24;background:#fffbeb;">
+                <p class="vv-card-label" style="color:#92400e;">PIN de recogida</p>
+
+                @if($pinBloqueado)
+                    <div style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;font-weight:600;color:#d41b11;background:#fff1f0;border:1px solid #fca5a5;border-radius:8px;padding:.55rem .75rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                        El repartidor agotó los 5 intentos del PIN. Contacta con soporte.
+                    </div>
+
+                @elseif($pedido->ped_pin_liquidacion)
+                    <div style="display:flex;justify-content:center;gap:.5rem;margin-bottom:.75rem;">
+                        @foreach(str_split($pedido->ped_pin_liquidacion) as $d)
+                            <div style="width:2.5rem;height:3rem;background:#fff;border:2px solid #fbbf24;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#b45309;">{{ $d }}</div>
+                        @endforeach
+                    </div>
+                    <div class="vv-info-list">
+                        @if($repPersona)
+                        <div class="vv-info-row">
+                            <span class="vv-info-key">Repartidor</span>
+                            <span class="vv-info-val">{{ trim($repPersona->per_nombre . ' ' . $repPersona->per_paterno) }}</span>
+                        </div>
+                        @endif
+                        @if($pedido->ped_liquidado_at)
+                        <div class="vv-info-row">
+                            <span class="vv-info-key">Pagado el</span>
+                            <span class="vv-info-val">{{ $pedido->ped_liquidado_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        @endif
+                    </div>
+
+                @else
+                    <p style="font-size:.78rem;color:#92400e;margin-bottom:.75rem;">
+                        El PIN aún no fue generado para este pedido.
+                    </p>
+                    <button wire:click="generarPin"
+                        style="width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:9px;font-family:inherit;font-size:.85rem;font-weight:800;color:#1a1a1a;cursor:pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
+                        </svg>
+                        Generar PIN de recogida
+                    </button>
+                @endif
+            </div>
+            @endif
 
         </div>
 
@@ -111,12 +170,16 @@
             {{-- Resumen --}}
             <div class="vv-resumen">
                 <div class="vv-resumen-row">
-                    <span>Subtotal</span>
-                    <span>${{ number_format($record->detalles->sum('vde_subtotal'), 2) }}</span>
+                    <span>Subtotal productos</span>
+                    <span>${{ number_format($subtotalProductos, 2) }}</span>
+                </div>
+                <div class="vv-resumen-row" style="color:#b45309;">
+                    <span>Comisión plataforma ({{ $pct }}%)</span>
+                    <span>-${{ number_format($comision, 2) }}</span>
                 </div>
                 <div class="vv-resumen-row total">
-                    <span>Total</span>
-                    <span>${{ number_format($record->ven_total, 2) }}</span>
+                    <span>Tu ganancia</span>
+                    <span>${{ number_format($ganancia, 2) }}</span>
                 </div>
             </div>
         </div>

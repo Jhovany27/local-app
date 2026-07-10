@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
  * Class Tienda
@@ -54,10 +55,41 @@ class Tienda extends Model
         'tie_latitud',
         'tie_longitud',
         'tie_direccion',
+        'tie_municipio',
+        'tie_hora_apertura',
+        'tie_hora_cierre',
+        'tie_numero_cuenta',
+        'stripe_account_id',
         'tie_estado',
         'tie_fecha_registro',
         'user_id',
     ];
+
+    public function estaAbierta(): bool
+    {
+        if (!$this->tie_hora_apertura || !$this->tie_hora_cierre) {
+            return true;
+        }
+        $ahora    = now('America/Merida')->format('H:i:s');
+        $apertura = $this->tie_hora_apertura;
+        $cierre   = $this->tie_hora_cierre;
+
+        if ($apertura <= $cierre) {
+            return $ahora >= $apertura && $ahora <= $cierre;
+        }
+        // Horario que cruza medianoche (ej. 22:00 – 02:00)
+        return $ahora >= $apertura || $ahora <= $cierre;
+    }
+
+    public function horarioTexto(): ?string
+    {
+        if (!$this->tie_hora_apertura || !$this->tie_hora_cierre) {
+            return null;
+        }
+        $ap = Carbon::createFromFormat('H:i:s', $this->tie_hora_apertura)->format('g:i a');
+        $ci = Carbon::createFromFormat('H:i:s', $this->tie_hora_cierre)->format('g:i a');
+        return "{$ap} – {$ci}";
+    }
 
     public function user()
     {

@@ -276,3 +276,101 @@ body {
     width: 24px;
     height: 24px;
 }
+
+/* ── ALERT ── */
+.alert {
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+}
+
+.alert-success {
+    background: #f0fde0;
+    color: #4a8a06;
+    border: 1.5px solid #c8f08f;
+}
+
+/* ── FORM CARD ── */
+.form-card {
+    background: white;
+    border: 1.5px solid #e8f5d0;
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.field-group label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #bbb;
+}
+
+.field-group input {
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #111;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    font-family: inherit;
+    background: white;
+}
+
+.field-group input:focus {
+    border-color: #a8df11;
+}
+
+.field-group input.error {
+    border-color: #d41b11;
+}
+
+.field-error {
+    font-size: 0.72rem;
+    color: #d41b11;
+    font-weight: 600;
+}
+
+.hint {
+    font-size: 0.72rem;
+    color: #bbb;
+    line-height: 1.4;
+}
+
+/* ── SUBMIT BTN ── */
+.btn-guardar {
+    width: 100%;
+    background: #a8df11;
+    color: white;
+    border: none;
+    border-radius: 0.9rem;
+    padding: 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.25rem;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.btn-guardar:hover {
+    background: #7cc10a;
+}
+
+.btn-guardar:active {
+    background: #5fa008;
+}

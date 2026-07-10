@@ -25,13 +25,15 @@ body {
 
 #mapa {
     width: 100%;
-    height: 60vh;
+    height: 42vh;
+    flex-shrink: 0;
     z-index: 1;
 }
 
 .info-panel {
     flex: 1;
-    padding: 1.25rem 1.25rem 8rem;
+    padding: 1.25rem 1.25rem 9.5rem;
+    overflow-y: auto;
 }
 
 .tienda-nombre {

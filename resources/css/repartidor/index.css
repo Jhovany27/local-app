@@ -241,6 +241,62 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Banners deuda */
+.deuda-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+.deuda-banner-bloqueado {
+    background: #fff1f0;
+    border: 1.5px solid #fca5a5;
+}
+.deuda-banner-alerta {
+    background: #fff7ed;
+    border: 1.5px solid #fed7aa;
+}
+.deuda-banner-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.deuda-banner-bloqueado .deuda-banner-icon {
+    background: #fee2e2;
+    color: #d41b11;
+}
+.deuda-banner-alerta .deuda-banner-icon {
+    background: #ffedd5;
+    color: #ea580c;
+}
+.deuda-banner-icon svg { width: 17px; height: 17px; }
+.deuda-banner-titulo {
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+}
+.deuda-banner-bloqueado .deuda-banner-titulo { color: #d41b11; }
+.deuda-banner-alerta   .deuda-banner-titulo { color: #ea580c; }
+.deuda-banner-sub {
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+.deuda-banner-bloqueado .deuda-banner-sub { color: #7f1d1d; }
+.deuda-banner-alerta   .deuda-banner-sub { color: #7c2d12; }
+
+/* Tarjetas bloqueadas */
+.pedido-card-bloqueado {
+    opacity: 0.45;
+    pointer-events: none;
+    position: relative;
+}
+
 /* Nav */
 .bottom-nav {
     position: fixed;

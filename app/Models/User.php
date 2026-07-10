@@ -51,9 +51,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'email_verified_at',
         'password',
         'remember_token',
+        'stripe_customer_id',
     ];
 
     // ── Relaciones ──────────────────────────────────────
+
+    public function tarjetasCliente()
+    {
+        return $this->hasMany(TarjetaCliente::class, 'tar_fk_user');
+    }
 
     public function roles(): BelongsToMany
     {
@@ -156,6 +162,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function ultimaTienda()
     {
         return $this->tiendas()->latest('tie_id')->first();
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\VerificarCorreoNotification());
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\RestablecerPasswordNotification($token));
     }
 
     // ── Filament ─────────────────────────────────────────

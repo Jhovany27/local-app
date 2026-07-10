@@ -168,6 +168,74 @@
 
 </div>
 
+{{-- NÚMERO DE CUENTA BANCARIA --}}
+<div class="mt-card" style="margin-top:1.25rem;">
+    <p class="mt-card-label">Número de cuenta bancaria</p>
+
+    @if(session('cuenta_ok'))
+        <div class="mt-success" style="margin-bottom:.85rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+            {{ session('cuenta_ok') }}
+        </div>
+    @endif
+
+    @if ($this->tienda->tie_numero_cuenta)
+        <div style="background:#f8fdf0;border:1px solid #d4edaa;border-radius:10px;padding:.65rem 1rem;margin-bottom:.85rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7ab80e;">Cuenta registrada</span>
+            <span style="font-size:.88rem;font-weight:800;color:#1a1a1a;letter-spacing:.05em;">{{ $this->tienda->tie_numero_cuenta }}</span>
+        </div>
+    @endif
+
+    {{-- Estado Stripe Connect --}}
+    @if ($this->tienda->stripe_account_id)
+        <div style="background:#f0fde0;border:1.5px solid #a8df11;border-radius:10px;padding:.7rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#4a8a06" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                <span style="font-size:.82rem;font-weight:700;color:#4a8a06;">Cuenta Stripe conectada</span>
+            </div>
+            <a href="{{ route('store.stripe.onboarding') }}"
+               style="font-size:.72rem;color:#888;text-decoration:underline;">Actualizar</a>
+        </div>
+    @else
+        <a href="{{ route('store.stripe.onboarding') }}"
+           style="display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.7rem;background:#635bff;border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;text-decoration:none;margin-bottom:.85rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+            Conectar cuenta bancaria con Stripe
+        </a>
+    @endif
+
+    <p style="font-size:.78rem;color:#888;margin-bottom:.85rem;line-height:1.4;">
+        Este número se usará para realizarte los depósitos de tus liquidaciones. Usa tu CLABE interbancaria de 18 dígitos.
+    </p>
+
+    <form method="POST" action="{{ route('store.cuenta-bancaria') }}">
+        @csrf
+        <div style="display:flex;gap:.65rem;align-items:flex-end;">
+            <div style="flex:1;">
+                <label style="display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7ab80e;margin-bottom:.3rem;">
+                    {{ $this->tienda->tie_numero_cuenta ? 'Nueva cuenta' : 'Número de cuenta' }}
+                </label>
+                <input
+                    type="text"
+                    name="tie_numero_cuenta"
+                    value="{{ old('tie_numero_cuenta') }}"
+                    placeholder="CLABE 18 dígitos"
+                    maxlength="18"
+                    style="width:100%;padding:.6rem .85rem;border:1.5px solid #d1d5db;border-radius:9px;font-size:.88rem;font-family:'Sora',sans-serif;background:#f8fdf0;box-sizing:border-box;"
+                    onfocus="this.style.borderColor='#a8df11'"
+                    onblur="this.style.borderColor='#d1d5db'">
+                @error('tie_numero_cuenta')
+                    <span style="font-size:.72rem;color:#d41b11;">{{ $message }}</span>
+                @enderror
+            </div>
+            <button type="submit"
+                style="padding:.62rem 1.15rem;background:linear-gradient(135deg,#a8df11,#7cc10a);border:none;border-radius:9px;font-family:'Sora',sans-serif;font-size:.82rem;font-weight:800;color:#1a1a1a;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                Guardar
+            </button>
+        </div>
+    </form>
+</div>
+
 <style>
 /* Wrap */
 .mt-success { display: flex; align-items: center; gap: 0.5rem; background: #f0fde0; border: 1px solid #c6f135; color: #4a8a06; font-size: 0.82rem; font-weight: 600; padding: 0.65rem 1rem; border-radius: 0.75rem; margin-bottom: 1.25rem; }

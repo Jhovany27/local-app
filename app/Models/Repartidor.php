@@ -33,6 +33,8 @@ class Repartidor extends Model
 
 	protected $fillable = [
 		'rep_tipo_vehiculo',
+		'rep_numero_cuenta',
+		'stripe_account_id',
 		'user_id',
 		'rep_ciudad',
 		'rep_colonia',

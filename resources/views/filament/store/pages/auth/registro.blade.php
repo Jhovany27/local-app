@@ -38,15 +38,46 @@
 
             <div>
                 <label class="block text-sm font-semibold mb-1">Contraseña</label>
-                <input type="password" name="password"
-                    class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#a8df11]">
+                <div style="position:relative">
+                    <input type="password" id="tienda-pwd" name="password"
+                        class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#a8df11]"
+                        style="padding-right:3rem">
+                    <button type="button" onclick="togglePwd('tienda-pwd','eyeT1','eyeT1c')"
+                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;">
+                        <svg id="eyeT1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <svg id="eyeT1c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18" style="display:none">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="tienda-pwd-reqs" style="display:none;margin-top:0.4rem;padding:0.5rem 0.75rem;background:#f9fafb;border-radius:0.5rem;border:1.5px solid #e5e7eb;">
+                    <div id="t-req-len" style="font-size:0.72rem;color:#dc2626;font-weight:600;line-height:1.8;"><span>✗</span> Mínimo 8 caracteres</div>
+                    <div id="t-req-upper" style="font-size:0.72rem;color:#dc2626;font-weight:600;line-height:1.8;"><span>✗</span> Al menos una mayúscula</div>
+                    <div id="t-req-num" style="font-size:0.72rem;color:#dc2626;font-weight:600;line-height:1.8;"><span>✗</span> Al menos un número</div>
+                </div>
                 @error('password') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
             </div>
 
             <div>
                 <label class="block text-sm font-semibold mb-1">Confirmar contraseña</label>
-                <input type="password" name="password_confirmation"
-                    class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#a8df11]">
+                <div style="position:relative">
+                    <input type="password" id="tienda-pwd-conf" name="password_confirmation"
+                        class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#a8df11]"
+                        style="padding-right:3rem">
+                    <button type="button" onclick="togglePwd('tienda-pwd-conf','eyeT2','eyeT2c')"
+                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;">
+                        <svg id="eyeT2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <svg id="eyeT2c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18" style="display:none">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- PERSONA -->
@@ -109,5 +140,34 @@
 
 </div>
 
+<script>
+function togglePwd(inputId, openId, closedId) {
+    const input  = document.getElementById(inputId);
+    const open   = document.getElementById(openId);
+    const closed = document.getElementById(closedId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        open.style.display   = 'none';
+        closed.style.display = 'block';
+    } else {
+        input.type = 'password';
+        open.style.display   = 'block';
+        closed.style.display = 'none';
+    }
+}
+const tiendaPwd  = document.getElementById('tienda-pwd');
+const tiendaReqs = document.getElementById('tienda-pwd-reqs');
+if (tiendaPwd && tiendaReqs) {
+    tiendaPwd.addEventListener('focus', () => tiendaReqs.style.display = 'block');
+    tiendaPwd.addEventListener('input', () => {
+        const v = tiendaPwd.value;
+        [['t-req-len', v.length >= 8], ['t-req-upper', /[A-Z]/.test(v)], ['t-req-num', /[0-9]/.test(v)]].forEach(([id, ok]) => {
+            const el = document.getElementById(id);
+            el.style.color = ok ? '#15803d' : '#dc2626';
+            el.querySelector('span').textContent = ok ? '✓' : '✗';
+        });
+    });
+}
+</script>
 </body>
 </html>

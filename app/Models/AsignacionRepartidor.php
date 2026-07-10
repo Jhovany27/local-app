@@ -40,7 +40,8 @@ class AsignacionRepartidor extends Model
 		'asr_fecha',
 		'asr_estado',
 		'asr_fk_repartidor',
-		'asr_fk_pedido'
+		'asr_fk_pedido',
+		'asr_motivo_cancelacion',
 	];
 
 	public function repartidor()

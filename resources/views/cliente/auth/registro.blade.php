@@ -89,6 +89,24 @@
             box-shadow: 0 0 0 4px rgba(168,223,17,0.12);
         }
 
+        .field-wrap { position: relative; }
+        .field input.has-toggle { padding-right: 3rem; }
+        .toggle-pwd {
+            position: absolute;
+            right: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s;
+        }
+        .toggle-pwd:hover { color: #4a8a06; }
+        .toggle-pwd svg { width: 18px; height: 18px; }
+
         .field-error {
             font-size: 0.75rem;
             color: #d41b11;
@@ -234,15 +252,42 @@
 
         <div class="field">
             <label>Contraseña</label>
-            <input type="password" name="password"
-                   placeholder="Mínimo 8 caracteres" required autocomplete="new-password">
+            <div class="field-wrap">
+                <input type="password" id="reg-pwd" name="password" class="has-toggle"
+                       placeholder="Mínimo 8 caracteres" required autocomplete="new-password">
+                <button type="button" class="toggle-pwd" onclick="togglePwd('reg-pwd','eyeR1','eyeR1c')">
+                    <svg id="eyeR1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <svg id="eyeR1c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="display:none">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="pwd-reqs" style="display:none;margin-top:0.5rem;padding:0.6rem 0.85rem;background:#f9f9f9;border-radius:0.65rem;border:1.5px solid #f0f0f0;">
+                <div class="pwd-req" id="req-len" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;transition:color 0.15s;"><span>✗</span> Mínimo 8 caracteres</div>
+                <div class="pwd-req" id="req-upper" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;transition:color 0.15s;"><span>✗</span> Al menos una mayúscula</div>
+                <div class="pwd-req" id="req-num" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;transition:color 0.15s;"><span>✗</span> Al menos un número</div>
+            </div>
             @error('password')<p class="field-error">{{ $message }}</p>@enderror
         </div>
 
         <div class="field">
             <label>Confirmar contraseña</label>
-            <input type="password" name="password_confirmation"
-                   placeholder="Repite tu contraseña" required>
+            <div class="field-wrap">
+                <input type="password" id="reg-pwd-conf" name="password_confirmation" class="has-toggle"
+                       placeholder="Repite tu contraseña" required>
+                <button type="button" class="toggle-pwd" onclick="togglePwd('reg-pwd-conf','eyeR2','eyeR2c')">
+                    <svg id="eyeR2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <svg id="eyeR2c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="display:none">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         {{-- AVISO DE PRIVACIDAD --}}
@@ -265,5 +310,32 @@
     </p>
 
 </div>
+<script>
+function togglePwd(inputId, openId, closedId) {
+    const input = document.getElementById(inputId);
+    const open  = document.getElementById(openId);
+    const closed = document.getElementById(closedId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        open.style.display = 'none';
+        closed.style.display = 'block';
+    } else {
+        input.type = 'password';
+        open.style.display = 'block';
+        closed.style.display = 'none';
+    }
+}
+const regPwd = document.getElementById('reg-pwd');
+const reqs   = document.getElementById('pwd-reqs');
+regPwd.addEventListener('focus', () => reqs.style.display = 'block');
+regPwd.addEventListener('input', () => {
+    const v = regPwd.value;
+    [['len', v.length >= 8], ['upper', /[A-Z]/.test(v)], ['num', /[0-9]/.test(v)]].forEach(([key, ok]) => {
+        const el = document.getElementById('req-' + key);
+        el.style.color = ok ? '#4a8a06' : '#d41b11';
+        el.querySelector('span').textContent = ok ? '✓' : '✗';
+    });
+});
+</script>
 </body>
 </html>

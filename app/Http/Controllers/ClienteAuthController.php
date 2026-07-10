@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ClienteAuthController extends Controller
@@ -83,7 +85,7 @@ class ClienteAuthController extends Controller
             'per_materno'  => ['nullable', 'string', 'max:255'],
             'per_telefono' => ['required', 'string', 'max:30'],
             'email'        => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password'     => ['required', 'confirmed', Password::min(8)],
+            'password'     => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'privacidad'   => ['accepted'],
         ]);
 
@@ -131,6 +133,86 @@ class ClienteAuthController extends Controller
         $persona = $user->persona;
 
         return view('cliente.perfil', compact('user', 'persona'));
+    }
+
+    public function editarPerfil()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $persona = $user->persona;
+
+        return view('cliente.perfil-editar', compact('user', 'persona'));
+    }
+
+    public function actualizarPerfil(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $data = $request->validate([
+            'per_nombre'      => ['required', 'string', 'max:255'],
+            'per_paterno'     => ['required', 'string', 'max:255'],
+            'per_materno'     => ['nullable', 'string', 'max:255'],
+            'per_telefono'    => ['required', 'string', 'max:30'],
+            'email'           => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password_actual' => ['nullable', 'required_with:nueva_password', 'string'],
+            'nueva_password'  => ['nullable', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
+        ]);
+
+        // Validar contraseña actual si se quiere cambiar
+        if ($request->filled('nueva_password')) {
+            if (!Hash::check($data['password_actual'] ?? '', $user->password)) {
+                return back()
+                    ->withErrors(['password_actual' => 'La contraseña actual es incorrecta.'])
+                    ->withInput();
+            }
+        }
+
+        $emailCambio = $data['email'] !== $user->email;
+
+        // Actualizar Persona
+        $persona = $user->persona;
+        $personaData = [
+            'per_nombre'   => $data['per_nombre'],
+            'per_paterno'  => $data['per_paterno'],
+            'per_materno'  => $data['per_materno'],
+            'per_telefono' => $data['per_telefono'],
+        ];
+        if ($persona) {
+            $persona->update($personaData);
+        } else {
+            Persona::create(array_merge($personaData, [
+                'per_fecha_registro' => now(),
+                'user_id'            => $user->id,
+            ]));
+        }
+
+        // Actualizar User
+        $user->name = $data['per_nombre'] . ' ' . $data['per_paterno'];
+
+        if ($emailCambio) {
+            $user->email = $data['email'];
+            $user->email_verified_at = null;
+        }
+
+        if ($request->filled('nueva_password')) {
+            $user->password = $data['nueva_password'];
+        }
+
+        $user->save();
+
+        if ($emailCambio) {
+            $user->sendEmailVerificationNotification();
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('verification.notice')
+                ->with('status', 'Hemos enviado un enlace de verificación a ' . $data['email'] . '. Por favor verifica tu nuevo correo para continuar.');
+        }
+
+        return redirect()->route('cliente.perfil')
+            ->with('success', 'Perfil actualizado correctamente.');
     }
 
     // ── LOGOUT ───────────────────────────────────────────

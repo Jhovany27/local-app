@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Pages\ConfiguracionEnvioPage;
+use App\Filament\Pages\ConfiguracionPlataformaPage;
+use App\Filament\Pages\GestionFinanciera;
 use App\Filament\Pages\RevisionTienda;
 
 
@@ -33,12 +35,15 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->darkMode(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
                 RevisionTienda::class,
                 ConfiguracionEnvioPage::class,
+                ConfiguracionPlataformaPage::class,
+                GestionFinanciera::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

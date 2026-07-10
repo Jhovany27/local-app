@@ -6,32 +6,6 @@
     <title>Mi perfil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @vite('resources/css/repartidor/perfil.css')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <style>
-        #mapa-zona { width:100%; height:220px; border-radius:12px; border:1.5px solid #d4edaa; }
-        .zona-form .field { margin-bottom:.75rem; }
-        .zona-form label { display:block; font-size:.72rem; font-weight:700; color:#555; margin-bottom:.25rem; text-transform:uppercase; letter-spacing:.05em; }
-        .zona-form input[type=text], .zona-form input[type=number] {
-            width:100%; padding:.55rem .75rem; border:1.5px solid #d1d5db; border-radius:8px;
-            font-size:.85rem; font-family:'Sora',sans-serif; background:#f8fdf0;
-            box-sizing:border-box;
-        }
-        .zona-form input:focus { outline:none; border-color:#a8df11; }
-        .field-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
-        .radio-row { display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; }
-        .radio-row label { margin:0; font-size:.82rem; font-weight:600; color:#333; text-transform:none; letter-spacing:0; }
-        .radio-row input[type=range] { flex:1; accent-color:#7cc10a; }
-        .radio-val { font-size:.85rem; font-weight:800; color:#4a8a06; min-width:3rem; text-align:right; }
-        .btn-guardar-zona {
-            width:100%; padding:.7rem; background:linear-gradient(135deg,#a8df11,#7cc10a);
-            border:none; border-radius:10px; font-family:'Sora',sans-serif;
-            font-size:.88rem; font-weight:800; color:#1a1a1a; cursor:pointer;
-            box-shadow:0 4px 14px rgba(168,223,17,.3); margin-top:.25rem;
-        }
-        .btn-guardar-zona:active { opacity:.85; }
-        .zona-hint { font-size:.73rem; color:#888; text-align:center; margin-bottom:.65rem; }
-        .alert-ok { background:#f0fde0; border:1.5px solid #c6f135; color:#3a6e04; border-radius:10px; padding:.65rem 1rem; font-size:.82rem; font-weight:700; margin-bottom:1rem; }
-    </style>
 </head>
 
 <body>
@@ -156,82 +130,56 @@
                 </div>
             </div>
 
-            {{-- ZONA DE ENTREGA --}}
+            {{-- EDITAR PERFIL --}}
             <div class="seccion">
-                <p class="seccion-titulo">Mi zona de entrega</p>
-
-                @if(session('zona_ok'))
-                    <div class="alert-ok">{{ session('zona_ok') }}</div>
-                @endif
-
-                <div class="info-card" style="padding:1rem;">
-                    <p class="zona-hint">Mueve el mapa o usa el buscador para centrar tu zona de cobertura.</p>
-
-                    {{-- Buscador --}}
-                    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;">
-                        <input type="text" id="buscar-zona" placeholder="Buscar colonia o ciudad…"
-                            style="flex:1;padding:.5rem .75rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:.82rem;font-family:'Sora',sans-serif;background:#f8fdf0;">
-                        <button type="button" onclick="buscarZona()"
-                            style="padding:.5rem .9rem;background:#a8df11;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.82rem;">
-                            Buscar
-                        </button>
-                    </div>
-
-                    {{-- Mapa --}}
-                    <div id="mapa-zona"></div>
-                    <p id="zona-coords" style="font-size:.7rem;color:#aaa;text-align:center;margin:.4rem 0 .75rem;">
-                        @if($repartidor->rep_lat)
-                            Lat {{ number_format($repartidor->rep_lat,5) }}, Lng {{ number_format($repartidor->rep_lng,5) }}
-                        @else
-                            Sin ubicación guardada
-                        @endif
-                    </p>
-
-                    <form method="POST" action="{{ route('repartidor.zona.update') }}" class="zona-form">
-                        @csrf
-
-                        <input type="hidden" name="rep_lat" id="f-lat" value="{{ $repartidor->rep_lat }}">
-                        <input type="hidden" name="rep_lng" id="f-lng" value="{{ $repartidor->rep_lng }}">
-
-                        {{-- Radio --}}
-                        <div class="radio-row">
-                            <label for="f-radio">Radio de cobertura</label>
-                            <input type="range" id="f-radio" name="rep_radio_km"
-                                min="1" max="50" value="{{ $repartidor->rep_radio_km ?? 10 }}"
-                                oninput="actualizarRadio(this.value)">
-                            <span class="radio-val" id="radio-label">{{ $repartidor->rep_radio_km ?? 10 }} km</span>
-                        </div>
-
-                        <div class="field-grid2">
-                            <div class="field">
-                                <label>CP</label>
-                                <input type="text" name="rep_cp" id="f-cp" value="{{ $repartidor->rep_cp }}">
-                            </div>
-                            <div class="field">
-                                <label>Colonia</label>
-                                <input type="text" name="rep_colonia" id="f-colonia" value="{{ $repartidor->rep_colonia }}">
-                            </div>
-                        </div>
-                        <div class="field-grid2">
-                            <div class="field">
-                                <label>Ciudad / Municipio</label>
-                                <input type="text" name="rep_ciudad" id="f-ciudad" value="{{ $repartidor->rep_ciudad }}" required>
-                            </div>
-                            <div class="field">
-                                <label>Estado</label>
-                                <input type="text" name="rep_entidad" id="f-entidad" value="{{ $repartidor->rep_entidad }}">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-guardar-zona">Guardar zona</button>
-                    </form>
-                </div>
+                <a href="{{ route('repartidor.editar-perfil') }}"
+                   style="display:block;width:100%;text-align:center;background:linear-gradient(135deg,#a8df11,#7cc10a);color:#1a1a1a;font-family:inherit;font-size:0.92rem;font-weight:800;padding:0.85rem;border-radius:999px;border:none;cursor:pointer;text-decoration:none;box-shadow:0 4px 14px rgba(168,223,17,0.3);">
+                    Editar mi perfil
+                </a>
             </div>
 
             {{-- ACCIONES --}}
             <div class="seccion">
                 <p class="seccion-titulo">Mi cuenta</p>
                 <div class="acciones-card">
+                    <a href="{{ route('repartidor.cuenta') }}" class="accion-row" style="text-decoration:none;">
+                        <div class="accion-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                            </svg>
+                        </div>
+                        <span class="accion-label">Número de cuenta</span>
+                        @if ($repartidor->rep_numero_cuenta)
+                            <span style="font-size:.7rem;color:#aaa;">···{{ substr($repartidor->rep_numero_cuenta, -4) }}</span>
+                        @endif
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#ccc" style="width:16px;height:16px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                    </a>
+                    <a href="{{ route('repartidor.zona') }}" class="accion-row" style="text-decoration:none;">
+                        <div class="accion-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                        </div>
+                        <span class="accion-label">Zona de entrega</span>
+                        @if ($repartidor->rep_ciudad)
+                            <span style="font-size:.72rem;color:#aaa;">{{ $repartidor->rep_ciudad }}</span>
+                        @endif
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#ccc" style="width:16px;height:16px;flex-shrink:0;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                    <a href="{{ route('repartidor.ganancias') }}" class="accion-row" style="text-decoration:none;">
+                        <div class="accion-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                        </div>
+                        <span class="accion-label">Mis ganancias</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#ccc" style="width:16px;height:16px;flex-shrink:0;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                     <form method="POST" action="{{ route('repartidor.logout') }}">
                         @csrf
                         <button type="submit" class="accion-row"
@@ -276,86 +224,6 @@
         </nav>
 
     </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const initLat = {{ (float) ($repartidor->rep_lat ?? 17.9919) }};
-        const initLng = {{ (float) ($repartidor->rep_lng ?? -92.9359) }};
-        let radioKm   = {{ (int) ($repartidor->rep_radio_km ?? 10) }};
-
-        let mapa, circulo, marcador;
-
-        document.addEventListener('DOMContentLoaded', function () {
-            mapa = L.map('mapa-zona', { zoomControl: false, attributionControl: false })
-                .setView([initLat, initLng], 13);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-
-            const icon = L.divIcon({
-                className: '',
-                html: '<div style="width:14px;height:14px;background:#7cc10a;border:2.5px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
-                iconAnchor: [7, 7],
-            });
-
-            marcador = L.marker([initLat, initLng], { icon, draggable: true }).addTo(mapa);
-            circulo  = L.circle([initLat, initLng], { radius: radioKm * 1000, color: '#7cc10a', fillColor: '#a8df11', fillOpacity: .15, weight: 2 }).addTo(mapa);
-
-            marcador.on('dragend', function () {
-                const pos = marcador.getLatLng();
-                actualizarPosicion(pos.lat, pos.lng);
-                geocodificar(pos.lat, pos.lng);
-            });
-
-            mapa.on('click', function (e) {
-                marcador.setLatLng(e.latlng);
-                circulo.setLatLng(e.latlng);
-                actualizarPosicion(e.latlng.lat, e.latlng.lng);
-                geocodificar(e.latlng.lat, e.latlng.lng);
-            });
-        });
-
-        function actualizarPosicion(lat, lng) {
-            document.getElementById('f-lat').value  = lat;
-            document.getElementById('f-lng').value  = lng;
-            document.getElementById('zona-coords').textContent =
-                'Lat ' + lat.toFixed(5) + ', Lng ' + lng.toFixed(5);
-        }
-
-        function actualizarRadio(val) {
-            radioKm = parseInt(val);
-            document.getElementById('radio-label').textContent = val + ' km';
-            if (circulo) circulo.setRadius(radioKm * 1000);
-        }
-
-        async function geocodificar(lat, lng) {
-            try {
-                const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`);
-                const data = await res.json();
-                const a    = data.address || {};
-                document.getElementById('f-cp').value      = a.postcode || '';
-                document.getElementById('f-colonia').value = a.suburb || a.neighbourhood || a.quarter || '';
-                document.getElementById('f-ciudad').value  = a.city || a.town || a.municipality || a.county || '';
-                document.getElementById('f-entidad').value = a.state || '';
-            } catch {}
-        }
-
-        async function buscarZona() {
-            const q = document.getElementById('buscar-zona').value.trim();
-            if (!q) return;
-            try {
-                const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=es`);
-                const d = await r.json();
-                if (d.length) {
-                    const lat = +d[0].lat, lng = +d[0].lon;
-                    mapa.setView([lat, lng], 13);
-                    marcador.setLatLng([lat, lng]);
-                    circulo.setLatLng([lat, lng]);
-                    actualizarPosicion(lat, lng);
-                    geocodificar(lat, lng);
-                }
-            } catch {}
-        }
-    </script>
 </body>
 
 </html>

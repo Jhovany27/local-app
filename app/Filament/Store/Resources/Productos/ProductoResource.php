@@ -151,12 +151,6 @@ class ProductoResource extends Resource
                     ->label('Estado')
                     ->formatStateUsing(fn($state) => $state ? 'Activo' : 'Inactivo')
                     ->sortable(),
-
-                TextColumn::make('tienda.tie_nombre')
-                    ->label('Tienda')
-                    ->searchable()
-                    ->sortable(),
-
                 TextColumn::make('categoria_producto.cat_nombre')
                     ->label('Categoría')
                     ->searchable()

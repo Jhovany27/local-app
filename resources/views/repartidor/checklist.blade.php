@@ -100,8 +100,12 @@
             <p class="modal-title">¿Ya recogiste todo?</p>
             @php $persona = $pedido->cliente?->user?->persona; @endphp
             <p class="modal-desc">
-                Entregarás el pedido a <strong>{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</strong>.<br>
-                Dirígete a la dirección del cliente para completar la entrega.
+                @if($esEfectivo && $montoParaTienda !== null)
+                    Ahora debes pagar <strong>${{ number_format($montoParaTienda, 2) }}</strong> a la tienda e ingresar su código antes de salir.
+                @else
+                    Entregarás el pedido a <strong>{{ $persona?->per_nombre }} {{ $persona?->per_paterno }}</strong>.<br>
+                    Dirígete a la dirección del cliente para completar la entrega.
+                @endif
             </p>
             <div class="modal-btns">
                 <button type="button" class="modal-cancel"
@@ -111,7 +115,11 @@
                 <form method="POST" action="{{ route('repartidor.recogi-pedido', $pedido->ped_id) }}" style="flex:2">
                     @csrf
                     <button type="submit" class="modal-confirm" style="width:100%">
-                        Sí, voy a entregar
+                        @if($esEfectivo)
+                            Pagar a la tienda
+                        @else
+                            Sí, voy a entregar
+                        @endif
                     </button>
                 </form>
             </div>

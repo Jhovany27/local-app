@@ -7,6 +7,7 @@ use App\Models\EstadoPedido;
 use App\Models\Pago;
 use App\Models\Pedido;
 use App\Models\Producto;
+use App\Models\Tienda;
 use App\Services\EnvioCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -81,6 +82,11 @@ class CarritoController extends Controller
     // ── AGREGAR ───────────────────────────────────────────
     public function agregar(Producto $producto)
     {
+        $tienda = Tienda::find($producto->pro_fk_tienda);
+        if ($tienda && !$tienda->estaAbierta()) {
+            return back()->with('error', 'La tienda está cerrada en este momento. Vuelve en el horario de atención.');
+        }
+
         if (!Auth::check()) {
             $carrito = session()->get('carrito', []);
             $id = $producto->pro_id;
@@ -253,7 +259,14 @@ class CarritoController extends Controller
             );
         }
 
-        return view('cliente.checkout', compact('pedido', 'direccion', 'envio'));
+        $tarjetas = Auth::check()
+            ? \App\Models\TarjetaCliente::where('tar_fk_user', Auth::id())
+                ->orderByDesc('tar_es_default')
+                ->orderByDesc('created_at')
+                ->get()
+            : collect();
+
+        return view('cliente.checkout', compact('pedido', 'direccion', 'envio', 'tarjetas'));
     }
 
     // ── CONFIRMAR ─────────────────────────────────────────
@@ -302,12 +315,12 @@ class CarritoController extends Controller
         DB::transaction(function () use ($pedido, $request, $subtotal, $costoEnvio) {
             $pedido->forceFill([
                 'ped_estado'       => 'pendiente',
-                'ped_tipo_entrega' => $request->tipo_entrega,
+                'ped_tipo_entrega' => strtolower($request->tipo_entrega),
                 'ped_codigo'       => 'PED-' . strtoupper(Str::random(8)),
                 'ped_fecha_pedido' => now(),
                 'ped_costo_envio'  => $costoEnvio,
                 'ped_total'        => $subtotal + $costoEnvio,
-                'ped_fk_direccion' => $request->tipo_entrega === 'domicilio'
+                'ped_fk_direccion' => strtolower($request->tipo_entrega) === 'domicilio'
                     ? session('direccion_id')
                     : null,
             ])->save();
@@ -328,6 +341,14 @@ class CarritoController extends Controller
                 ]
             );
         });
+
+        \App\Services\TiendaNotificacion::enviar(
+            $pedido->ped_fk_tienda,
+            'Nuevo pedido recibido',
+            "#{$pedido->ped_codigo} — $" . number_format($pedido->ped_total, 2) . " (Efectivo)",
+            'info',
+            'heroicon-o-shopping-bag'
+        );
 
         return redirect()->route('cliente.pedidos')
             ->with('success', '¡Pedido realizado! La tienda lo está preparando.');
@@ -353,6 +374,31 @@ class CarritoController extends Controller
             ->get();
 
         return view('cliente.mis-pedidos', compact('pedidos'));
+    }
+
+    // ── GENERAR PIN DE ENTREGA (cliente) ─────────────────
+    public function generarPinEntrega(int $pedidoId)
+    {
+        /** @var \App\Models\User $user */
+        $user    = Auth::user();
+        $cliente = $user->cliente;
+
+        abort_unless($cliente, 403);
+
+        $pedido = \App\Models\Pedido::where('ped_id', $pedidoId)
+            ->where('ped_fk_cliente', $cliente->cli_id)
+            ->whereHas('asignacion', fn($q) => $q->where('asr_estado', 2))
+            ->firstOrFail();
+
+        // Si ya tiene PIN, devolver el mismo (idempotente)
+        if ($pedido->ped_pin_entrega) {
+            return response()->json(['pin' => $pedido->ped_pin_entrega]);
+        }
+
+        $pin = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $pedido->update(['ped_pin_entrega' => $pin]);
+
+        return response()->json(['pin' => $pin]);
     }
 
     // ── MIGRAR SESIÓN A BD ────────────────────────────────
@@ -410,5 +456,136 @@ class CarritoController extends Controller
         }
 
         session()->forget('carrito');
+    }
+
+    // ── REPETIR PEDIDO ────────────────────────────────────
+    public function repetirPedido(int $pedidoId)
+    {
+        $clienteId = $this->getClienteId();
+        abort_unless($clienteId, 403);
+
+        $pedidoOriginal = Pedido::with(['detalles.producto.inventario'])
+            ->where('ped_id', $pedidoId)
+            ->where('ped_fk_cliente', $clienteId)
+            ->whereIn('ped_estado', ['completado', 'cancelado'])
+            ->firstOrFail();
+
+        $carrito   = $this->obtenerCarritoBD($clienteId, $pedidoOriginal->ped_fk_tienda);
+        $agregados = 0;
+        $omitidos  = [];
+
+        foreach ($pedidoOriginal->detalles as $detalle) {
+            $producto = $detalle->producto;
+
+            // Saltar si el producto fue eliminado o desactivado
+            if (! $producto || ! $producto->pro_estado) {
+                $omitidos[] = $producto?->pro_nombre ?? 'Producto eliminado';
+                continue;
+            }
+
+            $stock = $producto->inventario?->inv_stock_actual ?? 0;
+            $cantidadPedida = $detalle->det_cantidad;
+
+            // Si no hay suficiente stock, agregar lo que haya (mínimo 1)
+            $cantidad = min($cantidadPedida, max($stock, 0));
+
+            if ($cantidad === 0) {
+                $omitidos[] = $producto->pro_nombre . ' (sin stock)';
+                continue;
+            }
+
+            // Si ya está en el carrito, actualizar cantidad
+            $existente = $carrito->detalles()
+                ->where('det_fk_producto', $producto->pro_id)
+                ->first();
+
+            if ($existente) {
+                $nuevaCantidad = min($existente->det_cantidad + $cantidad, $stock);
+                $existente->update([
+                    'det_cantidad'        => $nuevaCantidad,
+                    'det_precio_unitario' => $producto->pro_precio_venta,
+                    'det_subtotal'        => round($nuevaCantidad * $producto->pro_precio_venta, 2),
+                ]);
+            } else {
+                DetallePedido::create([
+                    'det_fk_pedido'       => $carrito->ped_id,
+                    'det_fk_producto'     => $producto->pro_id,
+                    'det_cantidad'        => $cantidad,
+                    'det_precio_unitario' => $producto->pro_precio_venta,
+                    'det_subtotal'        => round($cantidad * $producto->pro_precio_venta, 2),
+                ]);
+            }
+
+            $agregados++;
+        }
+
+        $this->recalcularTotal($carrito);
+
+        if ($agregados === 0) {
+            return redirect()->route('cliente.pedidos')
+                ->with('error', 'No se pudo repetir el pedido: ningún producto está disponible.');
+        }
+
+        $msg = $agregados . ' ' . ($agregados === 1 ? 'producto agregado' : 'productos agregados') . ' al carrito.';
+        if (count($omitidos)) {
+            $msg .= ' No disponibles: ' . implode(', ', $omitidos) . '.';
+        }
+
+        return redirect()->route('carrito.index')
+            ->with('success', $msg);
+    }
+
+    // ── CANCELAR PEDIDO (cliente, solo cuando pendiente) ──
+    public function cancelarPedido(Request $request, int $pedidoId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('cliente.login');
+        }
+
+        $clienteId = $this->getClienteId();
+        abort_unless($clienteId, 403);
+
+        $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $pedido = Pedido::with('pago')
+            ->where('ped_id', $pedidoId)
+            ->where('ped_fk_cliente', $clienteId)
+            ->where('ped_estado', 'pendiente')
+            ->firstOrFail();
+
+        DB::transaction(function () use ($pedido, $request) {
+            $pedido->update([
+                'ped_estado'             => 'cancelado',
+                'ped_motivo_cancelacion' => $request->motivo,
+                'ped_cancelado_por'      => 'cliente',
+            ]);
+
+            EstadoPedido::create([
+                'esp_nombre'       => 'cancelado',
+                'esp_fecha_cambio' => now(),
+                'esp_fk_pedido'    => $pedido->ped_id,
+            ]);
+
+            // Reembolso automático si pagó con tarjeta
+            if (
+                strtolower($pedido->pago?->pag_metodo_pago ?? '') === 'tarjeta' &&
+                $pedido->pago?->pag_stripe_payment_intent
+            ) {
+                try {
+                    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+                    \Stripe\Refund::create([
+                        'payment_intent' => $pedido->pago->pag_stripe_payment_intent,
+                    ]);
+                    $pedido->pago->update(['pag_estado' => 'Reembolsado']);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Reembolso fallido: ' . $e->getMessage());
+                }
+            }
+        });
+
+        return redirect()->route('cliente.pedidos')
+            ->with('success', 'Pedido cancelado correctamente.');
     }
 }

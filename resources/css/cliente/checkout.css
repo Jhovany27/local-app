@@ -373,9 +373,6 @@ body {
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
-    max-width: 430px;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 .pago-overlay.visible {
@@ -438,4 +435,58 @@ body {
     font-weight: 700;
     color: #555;
     text-align: center;
+}
+
+/* ── TARJETAS GUARDADAS EN CHECKOUT ── */
+
+.saved-card-opt {
+    display: block;
+    cursor: pointer;
+}
+
+.saved-card-opt input[type="radio"] {
+    display: none;
+}
+
+.saved-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.9rem;
+    background: #fff;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.saved-card-opt input[type="radio"]:checked + .saved-card-inner {
+    border-color: #a8df11;
+    background: #f8fdf0;
+}
+
+.saved-card-icon {
+    width: 36px;
+    height: 28px;
+    background: #f3f4f6;
+    border-radius: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.guardar-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.78rem;
+    color: #555;
+    cursor: pointer;
+}
+
+.guardar-check-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #a8df11;
+    cursor: pointer;
 }

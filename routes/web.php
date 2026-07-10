@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\ClientePasswordController;
 use App\Http\Controllers\ClienteController;
 
 use App\Http\Controllers\EditarTiendaController;
@@ -45,6 +45,20 @@ Route::middleware(['auth'])->group(function () {
         ->name('store.editar-tienda');
 
     Route::post('/store/editar-tienda', [EditarTiendaController::class, 'update']);
+
+    Route::post('/store/cuenta-bancaria', [\App\Http\Controllers\CuentaBancariaController::class, 'updateTienda'])
+        ->name('store.cuenta-bancaria');
+
+    // ── Stripe Connect — Tienda
+    Route::get('/store/stripe/onboarding', [\App\Http\Controllers\StripeConnectController::class, 'onboardingTienda'])->name('store.stripe.onboarding');
+    Route::get('/store/stripe/return',     [\App\Http\Controllers\StripeConnectController::class, 'returnTienda'])->name('store.stripe.return');
+    Route::get('/store/stripe/refresh',    [\App\Http\Controllers\StripeConnectController::class, 'refreshTienda'])->name('store.stripe.refresh');
+});
+
+// ── ADMIN EXPORTS (solo admin) ────────────────────────
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/export/financiero', [\App\Http\Controllers\AdminExportController::class, 'financiero'])
+        ->name('admin.export.financiero');
 });
 
 
@@ -59,6 +73,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // =======================
 // CLIENTE AUTH
 // =======================
+// ── CLIENTE PASSWORD RESET ────────────────────────────
+Route::get('/cliente/password/forgot',         [ClientePasswordController::class, 'forgotForm'])->name('cliente.password.request');
+Route::post('/cliente/password/email',         [ClientePasswordController::class, 'sendResetLink'])->name('cliente.password.email')->middleware('throttle:5,1');
+Route::get('/cliente/password/reset/{token}',  [ClientePasswordController::class, 'resetForm'])->name('cliente.password.reset');
+Route::post('/cliente/password/update',        [ClientePasswordController::class, 'reset'])->name('cliente.password.update');
+
 Route::get('/cliente/login', [\App\Http\Controllers\ClienteAuthController::class, 'showLogin'])
     ->name('cliente.login');
 
@@ -87,6 +107,24 @@ Route::get('/cliente/producto/{id}', [ClienteController::class, 'showProducto'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cliente/perfil', [\App\Http\Controllers\ClienteAuthController::class, 'perfil'])
         ->name('cliente.perfil');
+
+    Route::get('/cliente/perfil/editar', [\App\Http\Controllers\ClienteAuthController::class, 'editarPerfil'])
+        ->name('cliente.perfil.editar');
+
+    Route::put('/cliente/perfil', [\App\Http\Controllers\ClienteAuthController::class, 'actualizarPerfil'])
+        ->name('cliente.perfil.update');
+
+    // ── Tarjetas guardadas ────────────────────────────────
+    Route::get('/cliente/tarjetas',                     [\App\Http\Controllers\TarjetaController::class, 'index'])
+        ->name('cliente.tarjetas');
+    Route::get('/cliente/tarjetas/agregar',             [\App\Http\Controllers\TarjetaController::class, 'agregar'])
+        ->name('cliente.tarjetas.agregar');
+    Route::post('/cliente/tarjetas/guardar',            [\App\Http\Controllers\TarjetaController::class, 'guardar'])
+        ->name('cliente.tarjetas.guardar');
+    Route::delete('/cliente/tarjetas/{id}',             [\App\Http\Controllers\TarjetaController::class, 'eliminar'])
+        ->name('cliente.tarjetas.eliminar');
+    Route::post('/cliente/tarjetas/{id}/predeterminar', [\App\Http\Controllers\TarjetaController::class, 'predeterminar'])
+        ->name('cliente.tarjetas.predeterminar');
 });
 
 // =======================
@@ -145,9 +183,21 @@ Route::get('/carrito/checkout/{pedidoId}', [\App\Http\Controllers\CarritoControl
 Route::post('/carrito/confirmar/{pedidoId}', [\App\Http\Controllers\CarritoController::class, 'confirmar'])
     ->name('carrito.confirmar');
 
+Route::post('/cliente/pedido/{id}/cancelar', [\App\Http\Controllers\CarritoController::class, 'cancelarPedido'])
+    ->middleware('auth')
+    ->name('cliente.pedido.cancelar');
+
+Route::post('/cliente/pedido/{id}/repetir', [\App\Http\Controllers\CarritoController::class, 'repetirPedido'])
+    ->middleware('auth')
+    ->name('cliente.pedido.repetir');
+
 Route::get('/cliente/pedidos', [\App\Http\Controllers\CarritoController::class, 'misPedidos'])
     ->middleware('auth')
     ->name('cliente.pedidos');
+
+Route::post('/cliente/pedido/{pedidoId}/generar-pin', [\App\Http\Controllers\CarritoController::class, 'generarPinEntrega'])
+    ->middleware('auth')
+    ->name('cliente.generar-pin-entrega');
 
 // FAVORITOS
 Route::middleware(['auth'])->group(function () {
@@ -216,6 +266,9 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
     Route::get('/completar-perfil',  [\App\Http\Controllers\RepartidorAuthController::class, 'showCompletarPerfil'])->name('repartidor.completar-perfil');
     Route::post('/completar-perfil', [\App\Http\Controllers\RepartidorAuthController::class, 'completarPerfil'])->name('repartidor.completar-perfil.store');
 
+    Route::get('/editar-perfil',  [\App\Http\Controllers\RepartidorAuthController::class, 'editarPerfil'])->name('repartidor.editar-perfil');
+    Route::post('/editar-perfil', [\App\Http\Controllers\RepartidorAuthController::class, 'actualizarPerfil'])->name('repartidor.actualizar-perfil');
+
     Route::get('/perfil', function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -224,8 +277,20 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
         $fotoPerfil = $repartidor->documentos()->where('dor_fk_tipo_documento', 4)->first();
         return view('repartidor.perfil', compact('user', 'persona', 'repartidor', 'fotoPerfil'));
     })->name('repartidor.perfil');
+    Route::get('/zona',      [\App\Http\Controllers\RepartidorController::class, 'zona'])->name('repartidor.zona');
     Route::post('/zona',     [\App\Http\Controllers\RepartidorController::class, 'actualizarZona'])->name('repartidor.zona.update');
-    Route::get('/historial', [\App\Http\Controllers\RepartidorController::class, 'historial'])->name('repartidor.historial');
+    Route::get('/cuenta',    [\App\Http\Controllers\CuentaBancariaController::class, 'showRepartidor'])->name('repartidor.cuenta');
+    Route::post('/cuenta',   [\App\Http\Controllers\CuentaBancariaController::class, 'updateRepartidor'])->name('repartidor.cuenta.update');
+
+    // ── Stripe Connect — Repartidor
+    Route::get('/stripe/onboarding', [\App\Http\Controllers\StripeConnectController::class, 'onboardingRepartidor'])->name('repartidor.stripe.onboarding');
+    Route::get('/stripe/return',     [\App\Http\Controllers\StripeConnectController::class, 'returnRepartidor'])->name('repartidor.stripe.return');
+    Route::get('/stripe/refresh',    [\App\Http\Controllers\StripeConnectController::class, 'refreshRepartidor'])->name('repartidor.stripe.refresh');
+    Route::get('/historial',  [\App\Http\Controllers\RepartidorController::class, 'historial'])->name('repartidor.historial');
+    Route::get('/ganancias',  [\App\Http\Controllers\RepartidorController::class, 'ganancias'])->name('repartidor.ganancias');
+    Route::get('/pedido/{pedidoId}/liquidar',     [\App\Http\Controllers\RepartidorController::class, 'liquidar'])->name('repartidor.liquidar');
+    Route::post('/pedido/{pedidoId}/liquidar',    [\App\Http\Controllers\RepartidorController::class, 'validarPin'])->name('repartidor.validar-pin');
+    Route::get('/pedido/{pedidoId}/liquidar/ok',  [\App\Http\Controllers\RepartidorController::class, 'liquidarOk'])->name('repartidor.liquidar.ok');
 
     Route::get('/',                          [\App\Http\Controllers\RepartidorController::class, 'index'])->name('repartidor.index');
     Route::get('/pedido/{pedidoId}',         [\App\Http\Controllers\RepartidorController::class, 'show'])->name('repartidor.pedido');
@@ -236,6 +301,16 @@ Route::middleware(['auth'])->prefix('driver')->group(function () {
     Route::post('/pedido/{pedidoId}/recogi', [\App\Http\Controllers\RepartidorController::class, 'recogiPedido'])->name('repartidor.recogi-pedido');
     Route::get('/pedido/{pedidoId}/entregar', [\App\Http\Controllers\RepartidorController::class, 'entregar'])->name('repartidor.entregar');
     Route::post('/pedido/{pedidoId}/entregue', [\App\Http\Controllers\RepartidorController::class, 'entreguePedido'])->name('repartidor.entregue-pedido');
+
+    Route::post('/pedido/{pedidoId}/llegue-cliente', [\App\Http\Controllers\RepartidorController::class, 'llegueAlCliente'])->name('repartidor.llegue-cliente');
+    Route::get('/pedido/{pedidoId}/esperar-cliente', [\App\Http\Controllers\RepartidorController::class, 'esperarCliente'])->name('repartidor.esperar-cliente');
+    Route::post('/pedido/{pedidoId}/validar-pin-entrega', [\App\Http\Controllers\RepartidorController::class, 'validarPinEntrega'])->name('repartidor.validar-pin-entrega');
+    Route::get('/entrega-ok', fn() => view('repartidor.entrega-ok'))->name('repartidor.entrega-ok');
+
+    Route::get('/pedido/{pedidoId}/pagar-tienda',  [\App\Http\Controllers\RepartidorController::class, 'pagarTienda'])->name('repartidor.pagar-tienda');
+    Route::post('/pedido/{pedidoId}/pagar-tienda', [\App\Http\Controllers\RepartidorController::class, 'validarPinTienda'])->name('repartidor.validar-pin-tienda');
+
+    Route::post('/pedido/{pedidoId}/cancelar-entrega', [\App\Http\Controllers\RepartidorController::class, 'cancelarEntrega'])->name('repartidor.cancelar-entrega');
 });
 
 

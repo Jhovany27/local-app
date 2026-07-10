@@ -3,17 +3,25 @@
 namespace App\Filament\Resources\Pedidos\Pages;
 
 use App\Filament\Resources\Pedidos\PedidoResource;
-use Filament\Actions\EditAction;
+use App\Models\Pedido;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewPedido extends ViewRecord
 {
     protected static string $resource = PedidoResource::class;
 
-    protected function getHeaderActions(): array
+    protected string $view = 'filament.resources.pedidos.pages.view-pedido';
+
+    public function getPedidoDetalladoProperty(): ?Pedido
     {
-        return [
-            EditAction::make(),
-        ];
+        return Pedido::with([
+            'cliente.user.persona',
+            'tienda',
+            'detalles.producto',
+            'pago',
+            'asignacion.repartidor.user.persona',
+            'direccion',
+            'estados',
+        ])->find($this->record->ped_id);
     }
 }

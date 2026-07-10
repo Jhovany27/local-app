@@ -42,18 +42,22 @@ class EditarTiendaController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $estabaRechazada = $tienda->tie_estado == Tienda::ESTADO_RECHAZADA;
+        $request->validate([
+            'tie_hora_apertura' => 'nullable|date_format:H:i',
+            'tie_hora_cierre'   => 'nullable|date_format:H:i',
+        ]);
 
         $tienda->update([
-            'tie_nombre'      => $request->tie_nombre,
-            'tie_descripcion' => $request->tie_descripcion,
-            'tie_telefono'    => $request->tie_telefono,
-            'tie_direccion'   => $request->tie_direccion,
-            'tie_latitud'     => $request->tie_latitud  ?? $tienda->tie_latitud,
-            'tie_longitud'    => $request->tie_longitud ?? $tienda->tie_longitud,
-            'tie_estado'      => $estabaRechazada
-                ? Tienda::ESTADO_PENDIENTE
-                : $tienda->tie_estado,
+            'tie_nombre'         => $request->tie_nombre,
+            'tie_descripcion'    => $request->tie_descripcion,
+            'tie_telefono'       => $request->tie_telefono,
+            'tie_direccion'      => $request->tie_direccion,
+            'tie_municipio'      => $request->tie_municipio      ?? $tienda->tie_municipio,
+            'tie_hora_apertura'  => $request->tie_hora_apertura  ?? $tienda->tie_hora_apertura,
+            'tie_hora_cierre'    => $request->tie_hora_cierre    ?? $tienda->tie_hora_cierre,
+            'tie_latitud'        => $request->tie_latitud        ?? $tienda->tie_latitud,
+            'tie_longitud'       => $request->tie_longitud       ?? $tienda->tie_longitud,
+            'tie_estado'         => Tienda::ESTADO_PENDIENTE,
             'tie_motivo_rechazo' => null,
         ]);
 
@@ -83,16 +87,8 @@ class EditarTiendaController extends Controller
             );
         }
 
-        //  Si estaba rechazada → regresar a pantalla de estado
-        // Si venía del panel store → regresar a mi tienda
-        if ($estabaRechazada) {
-            return redirect()
-                ->route('registro.tienda.pendiente')
-                ->with('success', 'Información actualizada. Tu solicitud está en revisión nuevamente.');
-        }
-
         return redirect()
-            ->to(\App\Filament\Store\Pages\MiTienda::getUrl(panel: 'store'))
-            ->with('success', 'Tienda actualizada correctamente.');
+            ->route('registro.tienda.pendiente')
+            ->with('info', 'Cambios guardados. Tu tienda está en revisión y volverá a estar visible cuando el administrador la valide.');
     }
 }

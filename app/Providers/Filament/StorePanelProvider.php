@@ -61,6 +61,8 @@ class StorePanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Lime,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('15s')
             ->discoverResources(
                 in: app_path('Filament/Store/Resources'),
                 for: 'App\\Filament\\Store\\Resources'
@@ -71,6 +73,7 @@ class StorePanelProvider extends PanelProvider
             )
             ->pages([
                 \App\Filament\Store\Pages\SeleccionarTienda::class,
+                \App\Filament\Store\Pages\CorteCaja::class,
             ])
             ->discoverWidgets(
                 in: app_path('Filament/Store/Widgets'),

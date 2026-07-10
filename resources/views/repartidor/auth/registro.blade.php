@@ -386,6 +386,14 @@
                 </div>
 
                 <div class="field">
+                    <label>Número de cuenta bancaria</label>
+                    <input type="text" name="rep_numero_cuenta" value="{{ old('rep_numero_cuenta') }}"
+                        placeholder="CLABE 18 dígitos" maxlength="18" inputmode="numeric" required>
+                    @error('rep_numero_cuenta')<span class="error-msg">{{ $message }}</span>@enderror
+                    <small style="color:#aaa;font-size:.72rem;">Para recibir tus pagos por transferencia.</small>
+                </div>
+
+                <div class="field">
                     <label>Tipo de vehículo</label>
                     <select name="rep_tipo_vehiculo" required>
                         <option value="">Seleccionar...</option>
@@ -501,12 +509,39 @@
 
                 <div class="field">
                     <label>Contraseña</label>
-                    <input type="password" name="password" placeholder="Mínimo 8 caracteres" required>
+                    <div style="position:relative">
+                        <input type="password" id="rep-pwd" name="password" placeholder="Mínimo 8 caracteres" required style="padding-right:3rem">
+                        <button type="button" onclick="togglePwd('rep-pwd','eyeRP1','eyeRP1c')" style="position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;display:flex;align-items:center;">
+                            <svg id="eyeRP1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <svg id="eyeRP1c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18" style="display:none">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="rep-pwd-reqs" style="display:none;margin-top:0.5rem;padding:0.6rem 0.85rem;background:#f9f9f9;border-radius:0.65rem;border:1.5px solid #f0f0f0;">
+                        <div id="rep-req-len" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;"><span>✗</span> Mínimo 8 caracteres</div>
+                        <div id="rep-req-upper" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;"><span>✗</span> Al menos una mayúscula</div>
+                        <div id="rep-req-num" style="font-size:0.72rem;color:#d41b11;font-weight:600;line-height:1.8;"><span>✗</span> Al menos un número</div>
+                    </div>
                 </div>
 
                 <div class="field">
                     <label>Confirmar contraseña</label>
-                    <input type="password" name="password_confirmation" placeholder="Repite tu contraseña" required>
+                    <div style="position:relative">
+                        <input type="password" id="rep-pwd-conf" name="password_confirmation" placeholder="Repite tu contraseña" required style="padding-right:3rem">
+                        <button type="button" onclick="togglePwd('rep-pwd-conf','eyeRP2','eyeRP2c')" style="position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;display:flex;align-items:center;">
+                            <svg id="eyeRP2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <svg id="eyeRP2c" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18" style="display:none">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587A3 3 0 0012 15a3 3 0 002.414-4.413M9.88 5.458A9.77 9.77 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a16.708 16.708 0 01-4.293 5.774M6.61 6.61A16.708 16.708 0 002.25 12s3.75 7.5 9.75 7.5a9.77 9.77 0 004.22-.958"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="nav-btns">
@@ -758,6 +793,35 @@
                 () => {},
                 { timeout: 8000, enableHighAccuracy: true }
             );
+        }
+
+        function togglePwd(inputId, openId, closedId) {
+            const input  = document.getElementById(inputId);
+            const open   = document.getElementById(openId);
+            const closed = document.getElementById(closedId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                open.style.display   = 'none';
+                closed.style.display = 'block';
+            } else {
+                input.type = 'password';
+                open.style.display   = 'block';
+                closed.style.display = 'none';
+            }
+        }
+
+        const repPwd  = document.getElementById('rep-pwd');
+        const repReqs = document.getElementById('rep-pwd-reqs');
+        if (repPwd && repReqs) {
+            repPwd.addEventListener('focus', () => repReqs.style.display = 'block');
+            repPwd.addEventListener('input', () => {
+                const v = repPwd.value;
+                [['rep-req-len', v.length >= 8], ['rep-req-upper', /[A-Z]/.test(v)], ['rep-req-num', /[0-9]/.test(v)]].forEach(([id, ok]) => {
+                    const el = document.getElementById(id);
+                    el.style.color = ok ? '#4a8a06' : '#d41b11';
+                    el.querySelector('span').textContent = ok ? '✓' : '✗';
+                });
+            });
         }
     </script>
 </body>

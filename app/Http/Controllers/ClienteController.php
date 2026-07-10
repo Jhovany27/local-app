@@ -43,23 +43,43 @@ class ClienteController extends Controller
 
     private function filtrarTiendasPorDireccion(Direccion $dir)
     {
+        $municipio = trim($dir->drc_ciudad ?? '');
+
         $query = Tienda::where('tie_estado', 1)->with('fachada');
 
-        if ($dir->drc_latitud && $dir->drc_longitud) {
-            $lat = (float) $dir->drc_latitud;
-            $lng = (float) $dir->drc_longitud;
-            // Haversine ≤ 30 km; tiendas sin coordenadas se incluyen como fallback
-            $query->where(function ($q) use ($lat, $lng) {
-                $q->whereNull('tie_latitud')
-                  ->orWhereNull('tie_longitud')
-                  ->orWhereRaw(
-                      '(6371 * acos(cos(radians(?)) * cos(radians(tie_latitud)) * cos(radians(tie_longitud) - radians(?)) + sin(radians(?)) * sin(radians(tie_latitud)))) <= 30',
-                      [$lat, $lng, $lat]
-                  );
-            });
-        } elseif (!empty($dir->drc_ciudad)) {
-            $query->where('tie_direccion', 'LIKE', '%' . Str::escapeLike($dir->drc_ciudad) . '%');
-        }
+        $query->where(function ($root) use ($dir, $municipio) {
+            // Tiendas con municipio explícito: solo las del mismo municipio
+            if ($municipio) {
+                $root->orWhere(function ($q) use ($municipio) {
+                    $q->whereNotNull('tie_municipio')
+                      ->where('tie_municipio', $municipio);
+                });
+            }
+
+            // Tiendas sin municipio registrado (existentes antes de la migración)
+            if ($dir->drc_latitud && $dir->drc_longitud) {
+                $lat = (float) $dir->drc_latitud;
+                $lng = (float) $dir->drc_longitud;
+                // Radio de 15 km para no cruzar municipios vecinos
+                $root->orWhere(function ($q) use ($lat, $lng, $municipio) {
+                    $q->whereNull('tie_municipio')
+                      ->where(function ($q2) use ($lat, $lng) {
+                          $q2->whereNull('tie_latitud')
+                             ->orWhereNull('tie_longitud')
+                             ->orWhereRaw(
+                                 '(6371 * acos(cos(radians(?)) * cos(radians(tie_latitud)) * cos(radians(tie_longitud) - radians(?)) + sin(radians(?)) * sin(radians(tie_latitud)))) <= 15',
+                                 [$lat, $lng, $lat]
+                             );
+                      });
+                });
+            } elseif ($municipio) {
+                // Sin coordenadas: buscar municipio en el texto de la dirección
+                $root->orWhere(function ($q) use ($municipio) {
+                    $q->whereNull('tie_municipio')
+                      ->where('tie_direccion', 'LIKE', '%' . Str::escapeLike($municipio) . '%');
+                });
+            }
+        });
 
         return $query->get();
     }

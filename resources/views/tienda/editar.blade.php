@@ -27,6 +27,22 @@
 
         <h1 class="page-title">Editar tienda</h1>
 
+        @if ($tienda->tie_estado === \App\Models\Tienda::ESTADO_RECHAZADA && $tienda->tie_motivo_rechazo)
+            <div style="background:#fff1f0;border:1.5px solid #fca5a5;border-radius:0.85rem;padding:0.85rem 1rem;margin-bottom:1rem;display:flex;gap:0.75rem;font-size:0.78rem;color:#d41b11;line-height:1.5;">
+                <svg style="width:18px;height:18px;flex-shrink:0;margin-top:0.05rem;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span><strong>Solicitud rechazada:</strong> {{ $tienda->tie_motivo_rechazo }}</span>
+            </div>
+        @endif
+
+        <div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:0.85rem;padding:0.85rem 1rem;margin-bottom:1.25rem;display:flex;gap:0.75rem;font-size:0.78rem;color:#1d4ed8;line-height:1.5;">
+            <svg style="width:18px;height:18px;flex-shrink:0;margin-top:0.05rem;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+            </svg>
+            <span>Al guardar cambios tu perfil quedará <strong>en revisión nuevamente</strong>. El equipo de LocalApp verificará tus datos antes de reactivar tu tienda.</span>
+        </div>
+
         @if (session('success'))
             <div class="success-msg">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -69,6 +85,24 @@
                 <div class="field">
                     <label>Teléfono</label>
                     <input type="text" name="tie_telefono" value="{{ $tienda->tie_telefono }}">
+                </div>
+                <div class="field">
+                    <label>Horario de atención</label>
+                    <div style="display:flex;gap:0.75rem;align-items:center;">
+                        <div style="flex:1">
+                            <p style="font-size:0.72rem;color:#888;text-align:center;margin-bottom:0.3rem;">Apertura</p>
+                            <input type="time" name="tie_hora_apertura"
+                                   value="{{ $tienda->tie_hora_apertura ? \Carbon\Carbon::createFromFormat('H:i:s', $tienda->tie_hora_apertura)->format('H:i') : '' }}"
+                                   required>
+                        </div>
+                        <span style="color:#aaa;font-weight:700;flex-shrink:0;">–</span>
+                        <div style="flex:1">
+                            <p style="font-size:0.72rem;color:#888;text-align:center;margin-bottom:0.3rem;">Cierre</p>
+                            <input type="time" name="tie_hora_cierre"
+                                   value="{{ $tienda->tie_hora_cierre ? \Carbon\Carbon::createFromFormat('H:i:s', $tienda->tie_hora_cierre)->format('H:i') : '' }}"
+                                   required>
+                        </div>
+                    </div>
                 </div>
                 <div class="nav-btns">
                     <button type="button" class="btn-next" onclick="goTo(2)">Siguiente →</button>
@@ -117,6 +151,7 @@
 
                 <input type="hidden" name="tie_latitud" id="input-lat" value="{{ $tienda->tie_latitud }}">
                 <input type="hidden" name="tie_longitud" id="input-lng" value="{{ $tienda->tie_longitud }}">
+                <input type="hidden" name="tie_municipio" id="input-municipio" value="{{ $tienda->tie_municipio }}">
 
                 <div class="nav-btns">
                     <button type="button" class="btn-prev" onclick="goTo(1)">← Volver</button>
@@ -223,12 +258,43 @@
 
                 <div class="nav-btns">
                     <button type="button" class="btn-prev" onclick="goTo(2)">← Volver</button>
-                    <button type="submit" class="btn-submit">Guardar cambios</button>
+                    <button type="button" class="btn-submit" onclick="mostrarModalConfirmar()">Guardar cambios</button>
                 </div>
             </div>
 
         </form>
     </div>
+
+    {{-- MODAL DE CONFIRMACIÓN --}}
+    <div id="modal-confirmar" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1.5rem;" onclick="if(event.target===this)cerrarModal()">
+        <div style="background:white;border-radius:1.5rem;padding:2rem 1.75rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.18);animation:modalIn 0.2s ease;">
+            <div style="width:52px;height:52px;background:linear-gradient(135deg,#fef9c3,#fde047);border-radius:1rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:26px;height:26px;color:#a16207;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+                </svg>
+            </div>
+            <h2 style="font-size:1.05rem;font-weight:800;color:#111;text-align:center;margin-bottom:0.6rem;">¿Confirmar cambios?</h2>
+            <p style="font-size:0.82rem;color:#666;text-align:center;line-height:1.6;margin-bottom:1.5rem;">
+                Al guardar, tu tienda quedará <strong style="color:#111;">en revisión</strong> mientras el administrador valida tu información actualizada.<br>
+                <span style="color:#999;font-size:0.76rem;">Durante ese tiempo no será visible para los clientes.</span>
+            </p>
+            <div style="display:flex;gap:0.75rem;">
+                <button type="button" onclick="cerrarModal()"
+                    style="flex:1;padding:0.75rem;border-radius:999px;border:2px solid #e5e7eb;background:white;font-family:inherit;font-size:0.88rem;font-weight:700;color:#555;cursor:pointer;transition:background 0.2s;"
+                    onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                    Cancelar
+                </button>
+                <button type="button" onclick="document.getElementById('form-editar').submit()"
+                    style="flex:1;padding:0.75rem;border-radius:999px;border:none;background:linear-gradient(135deg,#a8df11,#7cc10a);font-family:inherit;font-size:0.88rem;font-weight:800;color:#1a1a1a;cursor:pointer;box-shadow:0 4px 14px rgba(168,223,17,0.35);transition:opacity 0.2s;"
+                    onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+                    Sí, guardar
+                </button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes modalIn { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+    </style>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -313,10 +379,12 @@
                 const addr = data.address || {};
                 const texto = data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : '—';
                 document.getElementById('texto-dir').textContent = texto;
+                const municipio = addr.city || addr.town || addr.village || addr.municipality || '';
+                document.getElementById('input-municipio').value = municipio;
                 const partes = [
                     addr.road || addr.pedestrian || '',
                     addr.suburb || addr.neighbourhood || '',
-                    addr.city || addr.town || addr.village || '',
+                    municipio,
                     addr.state || '', addr.postcode || '', 'México'
                 ].filter(Boolean);
                 const dir = partes.join(', ');
@@ -384,6 +452,15 @@
         function showName(event, id) {
             const file = event.target.files[0];
             if (file) document.getElementById(id).textContent = '📎 ' + file.name;
+        }
+
+        function mostrarModalConfirmar() {
+            const modal = document.getElementById('modal-confirmar');
+            modal.style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-confirmar').style.display = 'none';
         }
     </script>
 </body>

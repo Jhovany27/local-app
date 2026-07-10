@@ -228,7 +228,7 @@
         <button type="submit" class="btn-submit">Iniciar sesión</button>
     </form>
 
-    <span class="olvide">Olvidé mi contraseña</span>
+    <a href="{{ route('cliente.password.request') }}" class="olvide" style="display:block;text-align:center;">Olvidé mi contraseña</a>
 
 </div>
 

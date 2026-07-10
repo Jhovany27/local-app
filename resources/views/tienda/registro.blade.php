@@ -72,6 +72,32 @@
                            placeholder="Teléfono"
                            class="w-full border-2 border-gray-800 rounded-lg px-4 py-2 text-center focus:outline-none" required>
                     @error('tie_telefono')<p class="text-red-500 text-xs text-center">{{ $message }}</p>@enderror
+
+                    <div>
+                        <p class="text-sm font-semibold text-center text-gray-700 mb-1">Horario de atención</p>
+                        <div class="flex gap-3 items-center">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-500 text-center mb-1">Apertura</label>
+                                <input type="time" name="tie_hora_apertura" value="{{ old('tie_hora_apertura') }}"
+                                       class="w-full border-2 border-gray-800 rounded-lg px-3 py-2 text-center focus:outline-none" required>
+                            </div>
+                            <span class="text-gray-400 font-bold">–</span>
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-500 text-center mb-1">Cierre</label>
+                                <input type="time" name="tie_hora_cierre" value="{{ old('tie_hora_cierre') }}"
+                                       class="w-full border-2 border-gray-800 rounded-lg px-3 py-2 text-center focus:outline-none" required>
+                            </div>
+                        </div>
+                        @error('tie_hora_apertura')<p class="text-red-500 text-xs text-center">{{ $message }}</p>@enderror
+                        @error('tie_hora_cierre')<p class="text-red-500 text-xs text-center">{{ $message }}</p>@enderror
+                    </div>
+
+                    <input type="text" name="tie_numero_cuenta" value="{{ old('tie_numero_cuenta') }}"
+                           placeholder="CLABE interbancaria (18 dígitos)"
+                           maxlength="18"
+                           class="w-full border-2 border-gray-800 rounded-lg px-4 py-2 text-center focus:outline-none" required>
+                    <p class="text-gray-400 text-xs text-center -mt-1">Para recibir tus liquidaciones por transferencia.</p>
+                    @error('tie_numero_cuenta')<p class="text-red-500 text-xs text-center">{{ $message }}</p>@enderror
                 </div>
 
                 <button type="button" onclick="goTo(2)"
@@ -121,6 +147,7 @@
 
                 <input type="hidden" name="tie_latitud" id="input-lat">
                 <input type="hidden" name="tie_longitud" id="input-lng">
+                <input type="hidden" name="tie_municipio" id="input-municipio">
 
                 <div class="flex gap-3 mt-5">
                     <button type="button" onclick="goTo(1)"
@@ -261,10 +288,12 @@
             const addr = data.address || {};
             const texto = data.display_name ? data.display_name.split(',').slice(0,3).join(', ') : '—';
             document.getElementById('texto-dir').textContent = texto;
+            const municipio = addr.city || addr.town || addr.village || addr.municipality || '';
+            document.getElementById('input-municipio').value = municipio;
             const partes = [
                 addr.road || addr.pedestrian || '',
                 addr.suburb || addr.neighbourhood || '',
-                addr.city || addr.town || addr.village || '',
+                municipio,
                 addr.state || '',
                 addr.postcode || '',
                 'México'

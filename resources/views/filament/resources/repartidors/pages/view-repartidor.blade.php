@@ -373,6 +373,98 @@
             color: #bbb; font-size: 0.82rem; text-align: center;
         }
         .vr-zona-empty svg { width: 36px; height: 36px; color: #d4edaa; }
+
+        /* ── Sección financiera ───────────── */
+        .vr-fin-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin-bottom:1rem; }
+        @media(max-width:768px){ .vr-fin-grid { grid-template-columns:1fr; } }
+        .vr-fin-card { background:#f8fdf0; border:1px solid #e8f5d0; border-radius:10px; padding:.85rem 1rem; }
+        .vr-fin-card-warn  { background:#fff7ed; border-color:#fed7aa; }
+        .vr-fin-card-green { background:#f0fde0; border-color:#a8df11; }
+        .vr-fin-label { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#7ab80e; margin-bottom:.3rem; }
+        .vr-fin-card-warn .vr-fin-label { color:#b45309; }
+        .vr-fin-val  { font-size:1.1rem; font-weight:900; color:#1a1a1a; }
+        .vr-bloqueo-banner { background:#fff1f0; border:1.5px solid #fca5a5; border-radius:10px; padding:.75rem 1rem; display:flex; align-items:center; gap:.65rem; margin-bottom:1rem; }
+        .vr-bloqueo-banner svg { width:16px; height:16px; color:#d41b11; flex-shrink:0; }
+        .vr-bloqueo-txt { font-size:.78rem; font-weight:600; color:#d41b11; }
+        .vr-alerta-banner { background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:.75rem 1rem; display:flex; align-items:center; gap:.65rem; margin-bottom:1rem; }
+        .vr-alerta-banner svg { width:16px; height:16px; color:#ea580c; flex-shrink:0; }
+        .vr-alerta-txt { font-size:.78rem; font-weight:600; color:#ea580c; }
+        .vr-fin-row { display:flex; align-items:center; gap:.65rem; padding:.5rem 0; border-bottom:1px solid #f5f5f5; font-size:.82rem; }
+        .vr-fin-row:last-child { border-bottom:none; }
+        .vr-fin-deuda-estado { font-size:.65rem; font-weight:700; padding:.15rem .5rem; border-radius:999px; flex-shrink:0; }
+        .vr-deuda-pendiente { background:#fff7ed; color:#b45309; }
+        .vr-deuda-pagada    { background:#f0fde0; color:#4a8a06; }
+        .vr-fin-row-desc  { flex:1; color:#555; }
+        .vr-fin-row-fecha { color:#aaa; font-size:.72rem; flex-shrink:0; }
+        .vr-fin-row-monto { font-weight:700; color:#1a1a1a; flex-shrink:0; }
     </style>
+
+    {{-- ══ SECCIÓN FINANCIERA ════════════════════════════ --}}
+    @php
+        $wr = $this->walletRepartidor;
+        $dr = $this->deudaResumen;
+    @endphp
+    <div class="vr-card" style="margin-top:1.25rem;">
+        <p class="vr-card-label">Información financiera</p>
+
+        {{-- Banner bloqueo --}}
+        @if ($dr['bloqueado'])
+            <div class="vr-bloqueo-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                <span class="vr-bloqueo-txt">BLOQUEADO — Deuda ${{ number_format($dr['total'], 2) }} supera el límite de ${{ number_format($dr['limite'], 2) }}. Debe liquidar al menos ${{ number_format($dr['para_desbloqueo'], 2) }}.</span>
+            </div>
+        @elseif ($dr['alerta'])
+            <div class="vr-alerta-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                <span class="vr-alerta-txt">Deuda en {{ number_format($dr['porcentaje'], 0) }}% del límite — se acerca al bloqueo.</span>
+            </div>
+        @endif
+
+        {{-- Stats --}}
+        @if ($wr)
+            <div class="vr-fin-grid">
+                <div class="vr-fin-card vr-fin-card-green">
+                    <p class="vr-fin-label">Viajes completados</p>
+                    <p class="vr-fin-val">{{ $this->viajesTotales }}</p>
+                </div>
+                <div class="vr-fin-card">
+                    <p class="vr-fin-label">Ganancias acumuladas</p>
+                    <p class="vr-fin-val">${{ number_format($wr->wal_total_ventas, 2) }}</p>
+                </div>
+                <div class="vr-fin-card vr-fin-card-warn">
+                    <p class="vr-fin-label">Deuda total pendiente</p>
+                    <p class="vr-fin-val">${{ number_format($dr['total'], 2) }}</p>
+                </div>
+            </div>
+
+            {{-- Deudas --}}
+            @if ($this->deudasRepartidor->count() > 0)
+                <p class="vr-card-label" style="margin-bottom:.5rem;">Deudas con la plataforma</p>
+                @foreach ($this->deudasRepartidor->take(8) as $deuda)
+                    <div class="vr-fin-row">
+                        <span class="vr-fin-deuda-estado {{ $deuda->dre_estado === 'pendiente' ? 'vr-deuda-pendiente' : 'vr-deuda-pagada' }}">{{ ucfirst($deuda->dre_estado) }}</span>
+                        <span class="vr-fin-row-desc">Pedido #{{ $deuda->pedido?->ped_codigo ?? $deuda->dre_fk_pedido }}</span>
+                        <span class="vr-fin-row-fecha">{{ $deuda->dre_fecha->format('d/m/Y') }}</span>
+                        <span class="vr-fin-row-monto">${{ number_format($deuda->dre_monto, 2) }}</span>
+                    </div>
+                @endforeach
+            @endif
+
+            {{-- Liquidaciones --}}
+            @if ($this->liquidacionesRepartidor->count() > 0)
+                <p class="vr-card-label" style="margin:.85rem 0 .5rem;">Historial de liquidaciones</p>
+                @foreach ($this->liquidacionesRepartidor as $liq)
+                    <div class="vr-fin-row">
+                        <span class="vr-fin-deuda-estado {{ $liq->liq_estado === 'pagada' ? 'vr-deuda-pagada' : 'vr-deuda-pendiente' }}">{{ ucfirst($liq->liq_estado) }}</span>
+                        <span class="vr-fin-row-desc">{{ $liq->liq_periodo_inicio->format('d/m/Y') }} — {{ $liq->liq_periodo_fin->format('d/m/Y') }}</span>
+                        <span class="vr-fin-row-fecha">{{ $liq->liq_fecha_creacion->format('d/m/Y') }}</span>
+                        <span class="vr-fin-row-monto">${{ number_format($liq->liq_monto, 2) }}</span>
+                    </div>
+                @endforeach
+            @endif
+        @else
+            <p style="font-size:.82rem;color:#aaa;">Sin movimientos financieros registrados.</p>
+        @endif
+    </div>
 
 </x-filament-panels::page>

@@ -41,6 +41,10 @@ class EnsureStoreSelected
             ->get();
 
         if ($tiendas->isEmpty()) {
+            // Si tiene tiendas pero ninguna aprobada → están en revisión o rechazadas
+            if ($user->tiendas()->exists()) {
+                return redirect()->route('registro.tienda.pendiente');
+            }
             return redirect()->route('registro.tienda');
         }
 

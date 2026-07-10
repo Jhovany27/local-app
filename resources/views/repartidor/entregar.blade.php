@@ -7,6 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @vite('resources/css/repartidor/entregar.css')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .btn-gmaps { width: 100%; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .65rem 1rem; background: #fff; border: 1.5px solid #d1d5db; border-radius: 10px; font-family: inherit; font-size: .85rem; font-weight: 700; color: #333; cursor: pointer; margin-bottom: 1rem; }
+        .btn-gmaps svg { width: 17px; height: 17px; flex-shrink: 0; }
+        .btn-gmaps:active { background: #f5f5f5; }
+    </style>
 </head>
 
 <body>
@@ -18,10 +23,11 @@
             <div class="estado-badge"><span class="estado-dot"></span>En camino al cliente</div>
 
             @php
-                $persona = $pedido->cliente?->user?->persona;
+                $persona   = $pedido->cliente?->user?->persona;
                 $direccion = $pedido->direccion ?? $pedido->cliente?->user?->direccions()->latest('drc_id')->first();
+                $hasCoords = $direccion && floatval($direccion->drc_latitud) && floatval($direccion->drc_longitud);
+                $searchQuery = urlencode(trim(($direccion?->drc_calle ?? '') . ' ' . ($direccion?->drc_colonia ?? '') . ' ' . ($direccion?->drc_ciudad ?? '')));
             @endphp
-
 
             <div class="cliente-card">
                 <div class="info-row">
@@ -82,6 +88,13 @@
                 @endif
             </div>
 
+            <button type="button" class="btn-gmaps" onclick="trazarRuta()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"/>
+                </svg>
+                Trazar ruta en Google Maps
+            </button>
+
             <div class="total-pill">
                 <p>
                     {{ strtolower($pedido->pago?->pag_metodo_pago) === 'tarjeta'
@@ -95,61 +108,43 @@
 
         <div class="footer-fixed">
             <button type="button" class="btn-entregue"
-                onclick="document.getElementById('modal-entregue').classList.add('open')">
-                Ya entregué el pedido
+                onclick="document.getElementById('modal-llegue').classList.add('open')">
+                Ya llegué al domicilio
             </button>
-            <p class="btn-hint">Presiona cuando el cliente haya recibido su pedido</p>
+            <p class="btn-hint">Presiona cuando estés en la puerta del cliente</p>
         </div>
     </div>
 
-    {{-- MODAL CONFIRMACIÓN --}}
-    <div class="modal-overlay" id="modal-entregue">
+    {{-- MODAL CONFIRMACIÓN LLEGADA --}}
+    <div class="modal-overlay" id="modal-llegue">
         <div class="modal">
             <div class="modal-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                 </svg>
             </div>
-            <p class="modal-title">¿Ya entregaste el pedido?</p>
+            <p class="modal-title">¿Ya llegaste al domicilio?</p>
             <p class="modal-desc">
-                Confirma que <strong>{{ $persona?->per_nombre }}</strong> recibió su pedido
-                y el pago en efectivo de <strong>${{ number_format($pedido->ped_total, 2) }}</strong>.
+                Confirma que estás en la puerta de <strong>{{ $persona?->per_nombre }}</strong>.<br>
+                El cliente deberá darte un código de 4 dígitos.
             </p>
             <div class="modal-btns">
                 <button type="button" class="modal-cancel"
-                    onclick="document.getElementById('modal-entregue').classList.remove('open')">
+                    onclick="document.getElementById('modal-llegue').classList.remove('open')">
                     Cancelar
                 </button>
-                <form method="POST" action="{{ route('repartidor.entregue-pedido', $pedido->ped_id) }}"
-                    id="form-entrega" style="flex:2">
+                <form method="POST" action="{{ route('repartidor.llegue-cliente', $pedido->ped_id) }}" style="flex:2">
                     @csrf
-                    <button type="button" class="modal-confirm" style="width:100%" onclick="confirmarEntrega()">
-                        Confirmar entrega
+                    <button type="submit" class="modal-confirm" style="width:100%">
+                        Sí, estoy aquí
                     </button>
                 </form>
             </div>
         </div>
-    </div>
-
-    {{-- OVERLAY ANIMACIÓN --}}
-    <div class="entrega-overlay" id="overlay-entrega">
-        <div class="e-circulo">
-            <svg class="e-spinner" viewBox="0 0 90 90" fill="none">
-                <circle cx="45" cy="45" r="38" stroke="#e8f5d0" stroke-width="6" />
-                <path d="M45 7 A38 38 0 0 1 83 45" stroke="#a8df11" stroke-width="6" stroke-linecap="round" />
-            </svg>
-            <svg class="e-check" id="e-check" viewBox="0 0 90 90" fill="none">
-                <circle cx="45" cy="45" r="38" stroke="#a8df11" stroke-width="6" />
-                <path class="e-check-path" id="e-check-path" d="M28 46 L40 58 L63 34" stroke="#a8df11"
-                    stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        </div>
-        <div class="e-barra-wrap">
-            <div class="e-barra" id="e-barra"></div>
-        </div>
-        <p class="e-txt" id="e-txt">Registrando entrega...</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -157,62 +152,32 @@
         // ── MAPA ─────────────────────────────────────────────
         const lat = {{ floatval($direccion?->drc_latitud) ?: 17.9869 }};
         const lng = {{ floatval($direccion?->drc_longitud) ?: -92.9303 }};
-        const mapa = L.map('mapa', {
-            attributionControl: false
-        }).setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
-        }).addTo(mapa);
-        const pinSvg =
-            '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#3b82f6" stroke="white" stroke-width="1.5"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>';
-        L.marker([lat, lng], {
-            icon: L.divIcon({
-                className: '',
-                html: pinSvg,
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
-            })
-        }).addTo(mapa);
+        const mapa = L.map('mapa', { attributionControl: false }).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
+        const pinSvg = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#3b82f6" stroke="white" stroke-width="1.5"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>';
+        L.marker([lat, lng], { icon: L.divIcon({ className: '', html: pinSvg, iconSize: [40, 40], iconAnchor: [20, 40] }) }).addTo(mapa);
 
-        // ── ANIMACIÓN ─────────────────────────────────────────
-        function confirmarEntrega() {
-            document.getElementById('modal-entregue').classList.remove('open');
+        // ── TRAZAR RUTA ───────────────────────────────────────
+        const hasCoords = {{ $hasCoords ? 'true' : 'false' }};
+        const destUrl = hasCoords
+            ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
+            : `https://www.google.com/maps/search/{{ $searchQuery }}`;
 
-            const overlay = document.getElementById('overlay-entrega');
-            const barra = document.getElementById('e-barra');
-            const txt = document.getElementById('e-txt');
-            const spinner = document.querySelector('.e-spinner');
-            const check = document.getElementById('e-check');
-            const path = document.getElementById('e-check-path');
-
-            overlay.classList.add('visible');
-
-            //  Animar barra sin esperar respuesta del servidor
-            let pct = 0;
-            const interval = setInterval(() => {
-                pct = Math.min(pct + Math.random() * 20, 85);
-                barra.style.width = pct + '%';
-            }, 300);
-
-            //  Esperar un momento, mostrar check y luego enviar el form normal
-            setTimeout(() => {
-                clearInterval(interval);
-                barra.style.width = '100%';
-
-                setTimeout(() => {
-                    spinner.style.display = 'none';
-                    check.style.opacity = '1';
-                    path.style.strokeDashoffset = '0';
-                    txt.textContent = '¡Pedido completado!';
-                }, 350);
-
-                //  Enviar form normalmente después de la animación
-                setTimeout(() => {
-                    document.getElementById('form-entrega').submit();
-                }, 1400);
-
-            }, 1200);
+        function trazarRuta() {
+            if (navigator.geolocation && hasCoords) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${pos.coords.latitude},${pos.coords.longitude}&destination=${lat},${lng}&travelmode=driving`;
+                        window.open(url, '_blank');
+                    },
+                    () => window.open(destUrl, '_blank'),
+                    { timeout: 4000, maximumAge: 30000 }
+                );
+            } else {
+                window.open(destUrl, '_blank');
+            }
         }
+
     </script>
 </body>
 

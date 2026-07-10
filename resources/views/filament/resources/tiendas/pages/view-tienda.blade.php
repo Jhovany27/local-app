@@ -401,6 +401,101 @@
         }
     </style>
 
+    {{-- ══ SECCIÓN FINANCIERA ════════════════════════════ --}}
+    @php $wf = $this->walletFinanciero; @endphp
+    <div class="vt-fin-wrap">
+        <p class="vt-fin-titulo">Información financiera</p>
+
+        @if ($wf)
+            {{-- Tarjetas resumen --}}
+            <div class="vt-fin-grid">
+                <div class="vt-fin-card">
+                    <p class="vt-fin-label">Ventas brutas</p>
+                    <p class="vt-fin-val">${{ number_format($wf->wal_total_ventas, 2) }}</p>
+                </div>
+                <div class="vt-fin-card vt-fin-card-red">
+                    <p class="vt-fin-label">Comisiones retenidas</p>
+                    <p class="vt-fin-val">${{ number_format($wf->wal_total_comisiones, 2) }}</p>
+                </div>
+                <div class="vt-fin-card vt-fin-card-green">
+                    <p class="vt-fin-label">Saldo pendiente de pago</p>
+                    <p class="vt-fin-val">${{ number_format($wf->wal_saldo_pendiente, 2) }}</p>
+                </div>
+                <div class="vt-fin-card">
+                    <p class="vt-fin-label">Total liquidado</p>
+                    <p class="vt-fin-val">${{ number_format($wf->wal_total_liquidado, 2) }}</p>
+                </div>
+            </div>
+
+            {{-- Últimos movimientos --}}
+            <p class="vt-fin-sub">Últimos movimientos</p>
+            @forelse ($this->movimientosTienda as $mov)
+                <div class="vt-fin-mov">
+                    <div class="vt-fin-mov-tipo vt-mov-{{ $mov->mwl_tipo }}">{{ ucfirst($mov->mwl_tipo) }}</div>
+                    <span class="vt-fin-mov-desc">{{ $mov->mwl_descripcion ?? '—' }}</span>
+                    <span class="vt-fin-mov-fecha">{{ $mov->mwl_fecha->format('d/m/Y') }}</span>
+                    <span class="vt-fin-mov-monto {{ in_array($mov->mwl_tipo, ['venta','ajuste']) ? 'vt-pos' : 'vt-neg' }}">
+                        {{ in_array($mov->mwl_tipo, ['comision','liquidacion']) ? '−' : '+' }}${{ number_format($mov->mwl_monto, 2) }}
+                    </span>
+                </div>
+            @empty
+                <p class="vt-fin-empty">Sin movimientos registrados.</p>
+            @endforelse
+
+            {{-- Liquidaciones --}}
+            @if ($this->liquidacionesTienda->count() > 0)
+                <p class="vt-fin-sub" style="margin-top:1.25rem;">Historial de liquidaciones</p>
+                @foreach ($this->liquidacionesTienda as $liq)
+                    <div class="vt-fin-liq">
+                        <div>
+                            <p class="vt-fin-liq-periodo">{{ $liq->liq_periodo_inicio->format('d/m/Y') }} — {{ $liq->liq_periodo_fin->format('d/m/Y') }}</p>
+                            <p class="vt-fin-liq-estado {{ $liq->liq_estado === 'pagada' ? 'vt-liq-pagada' : 'vt-liq-pendiente' }}">
+                                {{ ucfirst($liq->liq_estado) }}
+                                @if ($liq->liq_fecha_pago) · {{ $liq->liq_fecha_pago->format('d/m/Y') }} @endif
+                            </p>
+                        </div>
+                        <span class="vt-fin-liq-monto">${{ number_format($liq->liq_monto, 2) }}</span>
+                    </div>
+                @endforeach
+            @endif
+        @else
+            <p class="vt-fin-empty">Esta tienda aún no tiene movimientos en su wallet.</p>
+        @endif
+    </div>
+
+    <style>
+        .vt-fin-wrap { background:#fff; border:1.5px solid #e8f5d0; border-radius:14px; padding:1.25rem 1.5rem; margin-top:1.25rem; }
+        .vt-fin-titulo { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:#7ab80e; margin-bottom:1rem; }
+        .vt-fin-sub { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:#aaa; margin:.75rem 0 .5rem; }
+        .vt-fin-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.25rem; }
+        @media(max-width:900px){ .vt-fin-grid { grid-template-columns:repeat(2,1fr); } }
+        .vt-fin-card { background:#f8fdf0; border:1px solid #e8f5d0; border-radius:10px; padding:.85rem 1rem; }
+        .vt-fin-card-red   { background:#fff8f8; border-color:#fecaca; }
+        .vt-fin-card-green { background:#f0fde0; border-color:#a8df11; }
+        .vt-fin-label { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#7ab80e; margin-bottom:.3rem; }
+        .vt-fin-card-red .vt-fin-label { color:#ef4444; }
+        .vt-fin-val   { font-size:1.15rem; font-weight:900; color:#1a1a1a; }
+        .vt-fin-mov { display:flex; align-items:center; gap:.65rem; padding:.5rem 0; border-bottom:1px solid #f5f5f5; font-size:.82rem; }
+        .vt-fin-mov:last-child { border-bottom:none; }
+        .vt-fin-mov-tipo { font-size:.65rem; font-weight:700; padding:.15rem .5rem; border-radius:999px; flex-shrink:0; }
+        .vt-mov-venta       { background:#f0fde0; color:#4a8a06; }
+        .vt-mov-comision    { background:#fff8f8; color:#ef4444; }
+        .vt-mov-liquidacion { background:#eff6ff; color:#2563eb; }
+        .vt-mov-ajuste      { background:#fef9c3; color:#854d0e; }
+        .vt-fin-mov-desc  { flex:1; color:#555; font-size:.78rem; }
+        .vt-fin-mov-fecha { color:#aaa; font-size:.72rem; flex-shrink:0; }
+        .vt-fin-mov-monto { font-weight:700; flex-shrink:0; }
+        .vt-pos { color:#4a8a06; }
+        .vt-neg { color:#ef4444; }
+        .vt-fin-liq { display:flex; justify-content:space-between; align-items:center; padding:.6rem .75rem; background:#f8fdf0; border:1px solid #e8f5d0; border-radius:8px; margin-bottom:.5rem; }
+        .vt-fin-liq-periodo { font-size:.8rem; font-weight:700; color:#1a1a1a; }
+        .vt-fin-liq-estado  { font-size:.7rem; font-weight:600; }
+        .vt-liq-pagada   { color:#4a8a06; }
+        .vt-liq-pendiente{ color:#b45309; }
+        .vt-fin-liq-monto { font-size:.9rem; font-weight:800; color:#4a8a06; }
+        .vt-fin-empty { font-size:.82rem; color:#aaa; }
+    </style>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>

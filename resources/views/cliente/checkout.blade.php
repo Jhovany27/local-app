@@ -187,9 +187,87 @@
 
             {{-- FORMULARIO STRIPE --}}
             <div class="stripe-form" id="stripe-form">
-                <p style="font-size:0.75rem;font-weight:700;color:#333;margin-bottom:0.65rem;">Datos de tu tarjeta</p>
-                <div id="card-element"></div>
-                <div id="card-errors"></div>
+
+                @if($tarjetas->isNotEmpty())
+                    {{-- TARJETAS GUARDADAS --}}
+                    <p style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#888;margin-bottom:0.65rem;">
+                        Elige una tarjeta
+                    </p>
+
+                    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem;">
+                        @foreach($tarjetas as $tarjeta)
+                            <label class="saved-card-opt" id="lbl-saved-{{ $tarjeta->tar_id }}">
+                                <input type="radio" name="tarjeta_seleccion" value="{{ $tarjeta->tar_stripe_pm_id }}"
+                                    {{ $loop->first ? 'checked' : '' }}
+                                    onchange="seleccionarTarjeta('guardada')">
+                                <div class="saved-card-inner">
+                                    <div class="saved-card-icon">
+                                        @if(strtolower($tarjeta->tar_brand) === 'visa')
+                                            <span style="font-size:0.7rem;font-weight:900;color:#1a1f71;letter-spacing:-0.02em;">VISA</span>
+                                        @elseif(strtolower($tarjeta->tar_brand) === 'mastercard')
+                                            <svg viewBox="0 0 28 20" width="24" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="10" cy="10" r="8" fill="#eb001b"/>
+                                                <circle cx="18" cy="10" r="8" fill="#f79e1b"/>
+                                            </svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#888" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>
+                                        @endif
+                                    </div>
+                                    <div style="flex:1;">
+                                        <p style="font-size:0.8rem;font-weight:700;color:#111;font-family:monospace;">
+                                            •••• {{ $tarjeta->tar_last4 }}
+                                        </p>
+                                        <p style="font-size:0.7rem;color:#999;">
+                                            Vence {{ str_pad($tarjeta->tar_exp_month, 2, '0', STR_PAD_LEFT) }}/{{ $tarjeta->tar_exp_year }}
+                                        </p>
+                                    </div>
+                                    @if($tarjeta->tar_es_default)
+                                        <span style="background:#a8df11;color:#2d6004;font-size:0.6rem;font-weight:800;padding:0.15rem 0.45rem;border-radius:999px;text-transform:uppercase;letter-spacing:0.05em;">Principal</span>
+                                    @endif
+                                </div>
+                            </label>
+                        @endforeach
+
+                        {{-- OPCIÓN: NUEVA TARJETA --}}
+                        <label class="saved-card-opt" id="lbl-nueva">
+                            <input type="radio" name="tarjeta_seleccion" value="nueva"
+                                onchange="seleccionarTarjeta('nueva')">
+                            <div class="saved-card-inner">
+                                <div class="saved-card-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="2" stroke="#888" style="width:16px;height:16px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p style="font-size:0.8rem;font-weight:700;color:#111;">Nueva tarjeta</p>
+                                    <p style="font-size:0.7rem;color:#999;">Ingresar datos manualmente</p>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    {{-- FORMULARIO NUEVA TARJETA (oculto si hay guardadas) --}}
+                    <div id="new-card-form" style="display:none;">
+                        <div id="card-element"></div>
+                        <div id="card-errors" style="color:#dc2626;font-size:0.78rem;margin-top:0.4rem;min-height:1rem;"></div>
+                        <label class="guardar-check-label" style="margin-top:0.65rem;">
+                            <input type="checkbox" id="chk-guardar" value="1">
+                            <span>Guardar esta tarjeta para futuros pagos</span>
+                        </label>
+                    </div>
+
+                @else
+                    {{-- SIN TARJETAS GUARDADAS: formulario directo --}}
+                    <p style="font-size:0.75rem;font-weight:700;color:#333;margin-bottom:0.65rem;">Datos de tu tarjeta</p>
+                    <div id="card-element"></div>
+                    <div id="card-errors" style="color:#dc2626;font-size:0.78rem;margin-top:0.4rem;min-height:1rem;"></div>
+                    <label class="guardar-check-label" style="margin-top:0.65rem;">
+                        <input type="checkbox" id="chk-guardar" value="1">
+                        <span>Guardar esta tarjeta para futuros pagos</span>
+                    </label>
+                @endif
+
             </div>
 
         </div>
@@ -241,6 +319,8 @@
         <input type="hidden" name="pedido_id" value="{{ $pedido->ped_id }}">
         <input type="hidden" name="payment_intent_id" id="payment-intent-id">
         <input type="hidden" name="tipo_entrega" id="tipo-tarjeta">
+        <input type="hidden" name="payment_method_id" id="pm-id-guardar">
+        <input type="hidden" name="guardar_tarjeta" id="guardar-tarjeta-val" value="0">
     </form>
 
 
@@ -252,28 +332,34 @@
         const stripe = Stripe(stripePublicKey);
         const elements = stripe.elements();
 
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontFamily: '"Instrument Sans", sans-serif',
-                    fontSize: '16px',
-                    color: '#111',
-                    '::placeholder': {
-                        color: '#aaa'
-                    },
-                },
-                invalid: {
-                    color: '#d41b11'
-                },
-            }
-        });
+        const cardStyle = {
+            base: {
+                fontFamily: '"Instrument Sans", sans-serif',
+                fontSize: '16px',
+                color: '#111',
+                '::placeholder': { color: '#aaa' },
+            },
+            invalid: { color: '#d41b11' },
+        };
 
+        const cardElement = elements.create('card', { style: cardStyle });
         cardElement.mount('#card-element');
-
         cardElement.on('change', function(event) {
             const errors = document.getElementById('card-errors');
-            errors.textContent = event.error ? event.error.message : '';
+            if (errors) errors.textContent = event.error ? event.error.message : '';
         });
+
+        // ── Estado: tarjetas guardadas ──────────────────────
+        const hayTarjetasGuardadas = {{ $tarjetas->isNotEmpty() ? 'true' : 'false' }};
+        let modoTarjeta = hayTarjetasGuardadas ? 'guardada' : 'nueva'; // 'guardada' | 'nueva'
+
+        function seleccionarTarjeta(modo) {
+            modoTarjeta = modo;
+            const newCardForm = document.getElementById('new-card-form');
+            if (newCardForm) {
+                newCardForm.style.display = modo === 'nueva' ? 'block' : 'none';
+            }
+        }
 
         function toggleStripe(mostrar) {
             const form = document.getElementById('stripe-form');
@@ -288,69 +374,90 @@
             return document.querySelector('input[name="metodo_pago"]:checked')?.value ?? 'efectivo';
         }
 
+        function getTarjetaSeleccionada() {
+            return document.querySelector('input[name="tarjeta_seleccion"]:checked')?.value ?? null;
+        }
+
+        function quiereGuardar() {
+            return document.getElementById('chk-guardar')?.checked ?? false;
+        }
+
         async function procesarPago() {
             const metodo = getMetodoPago();
-            const tipo = getTipoEntrega();
-            const btn = document.getElementById('btn-pagar');
-
+            const tipo   = getTipoEntrega();
+            const btn    = document.getElementById('btn-pagar');
             btn.disabled = true;
 
             if (metodo === 'efectivo') {
-                // ── EFECTIVO: animación + submit normal ──────────
                 mostrarOverlay();
                 document.getElementById('tipo-efectivo').value = tipo;
-
                 setTimeout(() => {
                     completarOverlay('Pedido realizado');
                     setTimeout(() => document.getElementById('form-efectivo').submit(), 1400);
                 }, 1200);
+                return;
+            }
 
-            } else {
-                // ── TARJETA: crear PaymentIntent → confirmar ──────
-                mostrarOverlay();
+            // ── TARJETA ───────────────────────────────────────
+            mostrarOverlay();
 
-                try {
-                    // 1. Crear PaymentIntent en el servidor
-                    const res = await fetch('{{ route('stripe.intent') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        body: JSON.stringify({
-                            pedido_id: {{ $pedido->ped_id }},
-                            tipo_entrega: getTipoEntrega()
-                        }),
-                    });
+            try {
+                const tarjetaPmId     = getTarjetaSeleccionada();
+                const usandoGuardada  = hayTarjetasGuardadas && modoTarjeta === 'guardada' && tarjetaPmId && tarjetaPmId !== 'nueva';
+                const guardar         = !usandoGuardada && quiereGuardar();
 
-                    const data = await res.json();
+                // 1. Crear PaymentIntent
+                const res = await fetch('{{ route('stripe.intent') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({
+                        pedido_id:      {{ $pedido->ped_id }},
+                        tipo_entrega:   tipo,
+                        guardar_tarjeta: guardar ? 1 : 0,
+                    }),
+                });
 
-                    // 2. Confirmar pago con Stripe.js
-                    const result = await stripe.confirmCardPayment(data.client_secret, {
-                        payment_method: {
-                            card: cardElement
-                        },
-                    });
+                const data = await res.json();
+                if (!data.client_secret) throw new Error('Sin client_secret');
 
-                    if (result.error) {
-                        ocultarOverlay();
-                        document.getElementById('card-errors').textContent = result.error.message;
-                        btn.disabled = false;
-                        return;
-                    }
-
-                    // 3. Pago exitoso → completar animación y enviar
-                    completarOverlay('Pago realizado');
-                    document.getElementById('payment-intent-id').value = result.paymentIntent.id;
-                    document.getElementById('tipo-tarjeta').value = tipo;
-
-                    setTimeout(() => document.getElementById('form-tarjeta').submit(), 1400);
-
-                } catch (e) {
-                    ocultarOverlay();
-                    document.getElementById('card-errors').textContent = 'Error al procesar el pago.';
-                    btn.disabled = false;
+                // 2. Confirmar con Stripe.js
+                let confirmParams;
+                if (usandoGuardada) {
+                    confirmParams = { payment_method: tarjetaPmId };
+                } else {
+                    confirmParams = { payment_method: { card: cardElement } };
                 }
+
+                const result = await stripe.confirmCardPayment(data.client_secret, confirmParams);
+
+                if (result.error) {
+                    ocultarOverlay();
+                    const errEl = document.getElementById('card-errors');
+                    if (errEl) errEl.textContent = result.error.message;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 3. Pago exitoso
+                completarOverlay('Pago realizado');
+                document.getElementById('payment-intent-id').value = result.paymentIntent.id;
+                document.getElementById('tipo-tarjeta').value       = tipo;
+
+                if (guardar && result.paymentIntent.payment_method) {
+                    document.getElementById('pm-id-guardar').value     = result.paymentIntent.payment_method;
+                    document.getElementById('guardar-tarjeta-val').value = '1';
+                }
+
+                setTimeout(() => document.getElementById('form-tarjeta').submit(), 1400);
+
+            } catch (e) {
+                ocultarOverlay();
+                const errEl = document.getElementById('card-errors');
+                if (errEl) errEl.textContent = 'Error al procesar el pago.';
+                btn.disabled = false;
             }
         }
 

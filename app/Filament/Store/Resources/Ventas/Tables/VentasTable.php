@@ -2,6 +2,7 @@
 
 namespace App\Filament\Store\Resources\Ventas\Tables;
 
+use App\Models\ConfiguracionComision;
 use App\Models\Venta;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
@@ -33,10 +34,14 @@ class VentasTable
                     ->counts('detalles')
                     ->suffix(' producto(s)'),
 
-                TextColumn::make('ven_total')
-                    ->label('Total')
+                TextColumn::make('ganancia_tienda')
+                    ->label('Tu ganancia')
+                    ->getStateUsing(function ($record) {
+                        $subtotal = (float) ($record->detalles_sum_vde_subtotal ?? $record->detalles->sum('vde_subtotal'));
+                        $pct = ConfiguracionComision::porcentajeActual();
+                        return round($subtotal * (1 - $pct / 100), 2);
+                    })
                     ->money('MXN')
-                    ->sortable()
                     ->weight('bold'),
 
                 BadgeColumn::make('ven_estado')

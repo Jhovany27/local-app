@@ -10,7 +10,7 @@
             {{ $persona?->per_nombre }} {{ $persona?->per_paterno }}
         </p>
         <p class="ped-entrega">
-            {{ $pedido->ped_tipo_entrega === 'domicilio' ? '🛵 Domicilio' : '🏪 Recoger' }}
+            {{ strtolower($pedido->ped_tipo_entrega) === 'domicilio' ? '🛵 Domicilio' : '🏪 Recoger' }}
         </p>
     </div>
 </div>

@@ -51,6 +51,7 @@ class VentaResource extends Resource
 
         return parent::getEloquentQuery()
             ->with(['detalles.producto'])
+            ->withSum('detalles', 'vde_subtotal')
             ->where('ven_fk_tienda', $tiendaId)
             ->latest('ven_fecha');
     }

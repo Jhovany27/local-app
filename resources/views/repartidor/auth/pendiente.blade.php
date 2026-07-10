@@ -228,6 +228,12 @@
 <body>
     <div class="app">
 
+        @if (session('info') || session('success'))
+        <div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:0.85rem;padding:0.85rem 1rem;margin-bottom:1.5rem;font-size:0.8rem;color:#1d4ed8;line-height:1.5;text-align:center;">
+            {{ session('info') ?? session('success') }}
+        </div>
+        @endif
+
         @php $rechazado = $repartidor && (int)$repartidor->rep_estado === 2; @endphp
 
         @if ($rechazado)

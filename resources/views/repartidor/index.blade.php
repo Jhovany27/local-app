@@ -39,6 +39,55 @@
                 <div class="error-msg">{{ session('error') }}</div>
             @endif
 
+            {{-- BANNER DEUDA BLOQUEADO --}}
+            @if ($deudaInfo['bloqueado'])
+                <div class="deuda-banner deuda-banner-bloqueado">
+                    <div class="deuda-banner-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                        </svg>
+                    </div>
+                    <div class="deuda-banner-txt">
+                        <p class="deuda-banner-titulo">Pedidos bloqueados</p>
+                        <p class="deuda-banner-sub">Tu deuda acumulada <strong>${{ number_format($deudaInfo['total'], 2) }}</strong> supera el límite de <strong>${{ number_format($deudaInfo['limite'], 2) }}</strong>. Liquida al menos <strong>${{ number_format($deudaInfo['para_desbloqueo'], 2) }}</strong> para continuar.</p>
+                    </div>
+                </div>
+            {{-- BANNER ALERTA 80% --}}
+            @elseif ($deudaInfo['alerta'])
+                <div class="deuda-banner deuda-banner-alerta">
+                    <div class="deuda-banner-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                    </div>
+                    <div class="deuda-banner-txt">
+                        <p class="deuda-banner-titulo">Límite de deuda próximo</p>
+                        <p class="deuda-banner-sub">Llevas <strong>${{ number_format($deudaInfo['total'], 2) }}</strong> de deuda ({{ number_format($deudaInfo['porcentaje'], 0) }}% del límite). Liquida pronto para seguir operando sin interrupciones.</p>
+                    </div>
+                </div>
+            @endif
+
+            {{-- PENDIENTE DE LIQUIDACIÓN --}}
+            @if (isset($pedidoPendienteLiq) && $pedidoPendienteLiq)
+                <p class="seccion-titulo" style="color:#b45309;">Pendiente de liquidar</p>
+                @php
+                    $subtliq  = max(0, $pedidoPendienteLiq->ped_total - ($pedidoPendienteLiq->ped_costo_envio ?? 0));
+                    $pctliq   = \App\Models\ConfiguracionComision::porcentajeActual();
+                    $montoLiq = round($subtliq * (1 - $pctliq / 100), 2);
+                @endphp
+                <a href="{{ route('repartidor.liquidar', $pedidoPendienteLiq->ped_id) }}" class="activo-banner" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #fbbf24;">
+                    <div class="activo-texto">
+                        <p style="color:#b45309;font-weight:800;">Entrega el efectivo a la tienda</p>
+                        <p style="color:#92400e;">#{{ $pedidoPendienteLiq->ped_codigo }} · entregar ${{ number_format($montoLiq, 2) }}</p>
+                    </div>
+                    <div class="activo-arrow" style="background:rgba(0,0,0,.08);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#b45309">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </div>
+                </a>
+            @endif
+
             {{-- PEDIDO ACTIVO --}}
             @if ($pedidoActivo)
                 @php
@@ -76,7 +125,9 @@
             <p class="seccion-titulo">Disponibles ({{ $pedidos->count() }})</p>
 
             @forelse($pedidos as $pedido)
-                <a href="{{ route('repartidor.pedido', $pedido->ped_id) }}" class="pedido-card">
+                <a href="{{ $deudaInfo['bloqueado'] ? '#' : route('repartidor.pedido', $pedido->ped_id) }}"
+                   class="pedido-card {{ $deudaInfo['bloqueado'] ? 'pedido-card-bloqueado' : '' }}"
+                   {{ $deudaInfo['bloqueado'] ? 'onclick=return false' : '' }}>
                     <div class="pedido-header">
                         <div>
                             <p class="pedido-tienda">{{ $pedido->tienda->tie_nombre }}</p>

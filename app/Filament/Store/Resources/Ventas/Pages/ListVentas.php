@@ -3,6 +3,7 @@
 namespace App\Filament\Store\Resources\Ventas\Pages;
 
 use App\Filament\Store\Resources\Ventas\VentaResource;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 
 class ListVentas extends ListRecords
@@ -11,6 +12,12 @@ class ListVentas extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            Action::make('corte_caja')
+                ->label('Corte de caja')
+                ->icon('heroicon-o-calculator')
+                ->color('success')
+                ->url('/store/corte-caja'),
+        ];
     }
 }

@@ -32,11 +32,21 @@ class Pedido extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'ped_fecha_pedido' => 'datetime',
-		'ped_total' => 'float',
-		'ped_fk_cliente' => 'int',
-		'ped_fk_tienda' => 'int'
+		'ped_fecha_pedido'     => 'datetime',
+		'ped_total'            => 'float',
+		'ped_fk_cliente'       => 'int',
+		'ped_fk_tienda'        => 'int',
+		'ped_pin_generado_at'  => 'datetime',
+		'ped_liquidado_at'     => 'datetime',
+		'ped_pin_intentos'          => 'int',
+		'ped_pin_entrega_intentos'  => 'int',
 	];
+
+	const LIQ_NO_APLICA               = 'no_aplica';
+	const LIQ_PENDIENTE               = 'pendiente_liquidacion';
+	const LIQ_LIQUIDADO               = 'liquidado';
+	const PIN_MAX_INTENTOS            = 5;
+	const PIN_ENTREGA_MAX_INTENTOS    = 5;
 
 	protected $fillable = [
 		'ped_codigo',
@@ -47,7 +57,17 @@ class Pedido extends Model
 		'ped_fk_tienda',
 		'ped_costo_envio',
 		'ped_fk_direccion',
+		'ped_estado_liquidacion',
+		'ped_pin_liquidacion',
+		'ped_pin_generado_at',
+		'ped_pin_intentos',
+		'ped_liquidado_at',
 		'ped_estado',
+		'ped_pin_entrega',
+		'ped_pin_entrega_intentos',
+		'ped_motivo_cancelacion',
+		'ped_cancelado_por',
+		'ped_confirmado_tienda',
 	];
 
 	public function cliente()

@@ -15,7 +15,7 @@
         <div class="header">
             <div class="header-top">
                 <h1>Elige una tienda</h1>
-                <span class="header-ayuda">Ayuda</span>
+                <a href="{{ route('portal') }}" style="font-size:0.78rem;font-weight:700;color:#555;text-decoration:none;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);border:1px solid #e5e7eb;border-radius:999px;padding:0.3rem 0.85rem;transition:color 0.15s;" onmouseover="this.style.color='#111'" onmouseout="this.style.color='#555'">Portal</a>
             </div>
             <div class="search-inner">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -126,13 +126,27 @@
                             </div>
                         @endif
 
+                        @php $abierta = $tienda->estaAbierta(); @endphp
                         <div class="tienda-info">
                             <p class="tienda-nombre">{{ $tienda->tie_nombre }}</p>
                             <p class="tienda-dir">{{ $tienda->tie_direccion }}</p>
-                            <span class="tienda-badge">
-                                <span class="tienda-badge-dot"></span>
-                                Abierta
-                            </span>
+                            @if($abierta)
+                                <span class="tienda-badge">
+                                    <span class="tienda-badge-dot"></span>
+                                    Abierta
+                                    @if($tienda->horarioTexto())
+                                        · {{ $tienda->horarioTexto() }}
+                                    @endif
+                                </span>
+                            @else
+                                <span class="tienda-badge" style="background:#f3f4f6;color:#6b7280;border-color:#e5e7eb;">
+                                    <span class="tienda-badge-dot" style="background:#9ca3af;box-shadow:none;"></span>
+                                    Cerrada
+                                    @if($tienda->horarioTexto())
+                                        · {{ $tienda->horarioTexto() }}
+                                    @endif
+                                </span>
+                            @endif
                         </div>
 
                     </a>
