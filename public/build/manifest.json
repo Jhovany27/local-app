@@ -1,0 +1,53 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-DHV8ppeP.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/cliente/index.css": {
+    "file": "assets/index-DWvj0QCi.css",
+    "src": "resources/css/cliente/index.css",
+    "isEntry": true,
+    "name": "index",
+    "names": [
+      "index.css"
+    ]
+  },
+  "resources/css/cliente/producto.css": {
+    "file": "assets/producto-BymI3O_R.css",
+    "src": "resources/css/cliente/producto.css",
+    "isEntry": true,
+    "name": "producto",
+    "names": [
+      "producto.css"
+    ]
+  },
+  "resources/css/cliente/tienda.css": {
+    "file": "assets/tienda-BUND8gGk.css",
+    "src": "resources/css/cliente/tienda.css",
+    "isEntry": true,
+    "name": "tienda",
+    "names": [
+      "tienda.css"
+    ]
+  },
+  "resources/css/filament/store/theme.css": {
+    "file": "assets/theme-10tsrlWp.css",
+    "src": "resources/css/filament/store/theme.css",
+    "isEntry": true,
+    "name": "theme",
+    "names": [
+      "theme.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BLFka3bK.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
