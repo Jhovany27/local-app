@@ -47,7 +47,13 @@
     <p class="subtitle">Panel de repartidores · LocalApp</p>
 
     @if($errors->any())
-    <div class="error-msg">{{ $errors->first() }}</div>
+    <div class="error-msg">
+        @if($errors->first() === 'verificar_correo')
+            Debes <a href="{{ route('verificar-correo') }}" style="color:#d41b11;font-weight:800;text-decoration:underline;">verificar tu correo</a> antes de iniciar sesión.
+        @else
+            {{ $errors->first() }}
+        @endif
+    </div>
     @endif
 
     <form method="POST" action="{{ route('repartidor.login.store') }}">

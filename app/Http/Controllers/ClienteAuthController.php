@@ -44,7 +44,8 @@ class ClienteAuthController extends Controller
             //  Verificar si el correo está confirmado
             if (!$user->hasVerifiedEmail()) {
                 Auth::logout();
-                return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+                session(['verificacion_user_id' => $user->id, 'verificacion_rol' => 'cliente']);
+                return back()->withErrors(['email' => 'verificar_correo'])->onlyInput('email');
             }
 
             if (!$user->hasRol('cliente')) {

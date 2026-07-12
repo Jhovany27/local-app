@@ -194,7 +194,13 @@
 
     {{-- ERRORES --}}
     @error('email')
-    <div class="error-msg">{{ $message }}</div>
+    <div class="error-msg">
+        @if($message === 'verificar_correo')
+            Debes <a href="{{ route('verificar-correo') }}" style="color:#d41b11;font-weight:800;text-decoration:underline;">verificar tu correo</a> antes de iniciar sesión.
+        @else
+            {{ $message }}
+        @endif
+    </div>
     @enderror
 
     {{-- FORM --}}

@@ -19,6 +19,11 @@ Route::get('/', function () {
 });
 Route::get('/portal', [HomeController::class, 'portal'])->name('portal');
 
+// Verificación de correo (compartido para todos los roles)
+Route::get('/verificar-correo', [\App\Http\Controllers\VerificarCorreoController::class, 'show'])->name('verificar-correo');
+Route::post('/verificar-correo/reenviar', [\App\Http\Controllers\VerificarCorreoController::class, 'reenviar'])->name('verificar-correo.reenviar');
+Route::post('/verificar-correo/actualizar', [\App\Http\Controllers\VerificarCorreoController::class, 'actualizarEmail'])->name('verificar-correo.actualizar');
+
 Route::get('/store/cambiar-tienda', function () {
     session()->forget('store_tienda_id');
     return redirect()->route('filament.store.pages.seleccionar-tienda');

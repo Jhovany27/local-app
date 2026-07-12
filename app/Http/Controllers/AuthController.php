@@ -27,7 +27,8 @@ class AuthController extends Controller
 
             if (!$user->hasVerifiedEmail()) {
                 Auth::logout();
-                return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+                session(['verificacion_user_id' => $user->id, 'verificacion_rol' => 'tienda']);
+                return back()->withErrors(['email' => 'verificar_correo'])->onlyInput('email');
             }
 
             //  Si tiene rol tienda → entrar al panel

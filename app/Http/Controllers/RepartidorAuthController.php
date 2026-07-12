@@ -40,7 +40,8 @@ class RepartidorAuthController extends Controller
 
         if (!$user->hasVerifiedEmail()) {
             Auth::logout();
-            return back()->withErrors(['email' => 'Debes verificar tu correo antes de iniciar sesión.'])->onlyInput('email');
+            session(['verificacion_user_id' => $user->id, 'verificacion_rol' => 'repartidor']);
+            return back()->withErrors(['email' => 'verificar_correo'])->onlyInput('email');
         }
 
         return $this->redirigirSegunEstado($user);
