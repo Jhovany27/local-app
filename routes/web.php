@@ -341,13 +341,28 @@ Route::get('/tienda/email/verify', fn() => view('tienda.auth.verify-email'))
 Route::get('/repartidor/email/verify', fn() => view('repartidor.auth.verify-email'))
     ->middleware('auth')->name('repartidor.verification.notice');
 
-// Link del correo — redirige según rol del usuario
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
+// Link del correo — funciona sin estar logueado (signed URL valida la autenticidad)
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+
+    // Validar que el hash corresponde al email del usuario
+    if (! hash_equals(sha1($user->getEmailForVerification()), (string) $hash)) {
+        abort(403, 'Enlace de verificación inválido.');
+    }
+
+    // Marcar como verificado si aún no lo está
+    if (! $user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+
+    // Auto-login y regenerar sesión
+    Auth::login($user);
+    $request->session()->regenerate();
+
+    // Limpiar sesión de verificación pendiente
+    session()->forget(['verificacion_user_id', 'verificacion_rol']);
 
     /** @var \App\Models\User $user */
-    $user = $request->user();
-
     if ($user->hasRol('cliente')) {
         return redirect()->route('cliente.index');
     }
@@ -359,12 +374,11 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
             : redirect()->route('repartidor.pendiente');
     }
 
-    // Flujo tienda (sin rol aún hasta aprobación del admin)
     return $user->tiendas()->exists()
         ? redirect()->route('registro.tienda.pendiente')
         : redirect()->route('registro.tienda');
 
-})->middleware(['auth', 'signed'])->name('verification.verify');
+})->middleware(['signed'])->name('verification.verify');
 
 // Reenviar correo (compartido por todos los roles)
 Route::post('/email/resend', function (Request $request) {
